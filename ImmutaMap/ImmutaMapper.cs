@@ -61,15 +61,21 @@ namespace ImmutaMap
                     if (join.SourceProperty.PropertyType.IsArray)
                     {
                         var array = (Array)sourceValue;
-                        var elementType = join.ResultProperty.PropertyType.GetElementType();
-                        var newArrayType = elementType.MakeArrayType(array.Length);
-                        var mappedArray = (Array)Activator.CreateInstance(newArrayType, array.Length); 
-                        for (var i = 0; i < array.Length; i++)
+                        if (array == null)
                         {
-                            var mappedType = Map(array.GetValue(i), elementType);
-                            mappedArray.SetValue(mappedType, i);
+                            join.ResultProperty.SetValue(result, null);
                         }
-                        join.ResultProperty.SetValue(result, mappedArray);
+                        else
+                        {
+                            var elementType = join.ResultProperty.PropertyType.GetElementType();
+                            var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
+                            for (var i = 0; i < array.Length; i++)
+                            {
+                                var mappedType = Map(array.GetValue(i), elementType);
+                                mappedArray.SetValue(mappedType, i);
+                            }
+                            join.ResultProperty.SetValue(result, mappedArray);
+                        }
                     }
                     else if (!(sourceValue is string) && sourceValue is IEnumerable enumerable)
                     {
