@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -9,14 +11,16 @@ namespace ImmutaMap
     public class ImmutaMapper
     {
         private Mapper Mapper { get; } = new Mapper();
-
-        public TResult Merge<TResult>(object source, Action<Mapper> getMap = null)
+        private ImmutaMapper() { }
+        public static ImmutaMapper Build(Action<Mapper> getMap = null)
         {
-            getMap?.Invoke(Mapper);
-            return (TResult)Merge(source, typeof(TResult));
+            var immutaMapper = new ImmutaMapper();
+            getMap?.Invoke(immutaMapper.Mapper);
+            return immutaMapper;
         }
 
-        public object Merge(object source, Type resultType)
+        public TResult Map<TResult>(object source) => (TResult)Map(source, typeof(TResult));
+        public object Map(object source, Type resultType)
         {
             var sourceType = source.GetType();
             var sourceProperties = sourceType.GetProperties().ToList();
@@ -54,16 +58,45 @@ namespace ImmutaMap
                 if (join.ResultProperty.CanWrite)
                 {
                     var sourceValue = join.SourceProperty.GetValue(source);
-                    if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                    if (join.SourceProperty.PropertyType.IsArray)
                     {
-                        var mergeResult = Merge(sourceValue, join.ResultProperty.PropertyType);
-                        join.ResultProperty.SetValue(result, mergeResult);
+                        var array = (Array)sourceValue;
+                        var elementType = join.ResultProperty.PropertyType.GetElementType();
+                        var newArrayType = elementType.MakeArrayType(array.Length);
+                        var mappedArray = (Array)Activator.CreateInstance(newArrayType, array.Length); 
+                        for (var i = 0; i < array.Length; i++)
+                        {
+                            var mappedType = Map(array.GetValue(i), elementType);
+                            mappedArray.SetValue(mappedType, i);
+                        }
+                        join.ResultProperty.SetValue(result, mappedArray);
+                    }
+                    else if (!(sourceValue is string) && sourceValue is IEnumerable enumerable)
+                    {
+                        switch (enumerable)
+                        {
+                            case Array array:
+                                var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
+
+                                break;
+
+                            default:
+                                break;
+                        }
                     }
                     else
                     {
-                        join.ResultProperty.SetValue(result, sourceValue);
+                        if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                        {
+                            var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
+                            join.ResultProperty.SetValue(result, mappedType);
+                        }
+                        else
+                        {
+                            join.ResultProperty.SetValue(result, sourceValue);
+                        }
+                        joinedProperties.Remove(join);
                     }
-                    joinedProperties.Remove(join);
                 }
                 else
                 {
@@ -75,7 +108,7 @@ namespace ImmutaMap
                         var sourceValue = join.SourceProperty.GetValue(source);
                         if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
                         {
-                            var mergeResult = Merge(sourceValue, join.ResultProperty.PropertyType);
+                            var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
                             backingField.SetValue(mergeResult, sourceValue);
                         }
                         else
