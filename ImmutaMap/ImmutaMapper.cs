@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -77,19 +75,19 @@ namespace ImmutaMap
                             join.ResultProperty.SetValue(result, mappedArray);
                         }
                     }
-                    else if (!(sourceValue is string) && sourceValue is IEnumerable enumerable)
-                    {
-                        switch (enumerable)
-                        {
-                            case Array array:
-                                var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
+                    //else if (!(sourceValue is string) && sourceValue is IEnumerable enumerable)
+                    //{
+                    //    switch (enumerable)
+                    //    {
+                    //        case Array array:
+                    //            var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
 
-                                break;
+                    //            break;
 
-                            default:
-                                break;
-                        }
-                    }
+                    //        default:
+                    //            break;
+                    //    }
+                    //}
                     else
                     {
                         if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
@@ -112,7 +110,26 @@ namespace ImmutaMap
                     if (backingField != null)
                     {
                         var sourceValue = join.SourceProperty.GetValue(source);
-                        if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                        if (join.SourceProperty.PropertyType.IsArray)
+                        {
+                            var array = (Array)sourceValue;
+                            if (array == null)
+                            {
+                                backingField.SetValue(result, null);
+                            }
+                            else
+                            {
+                                var elementType = join.ResultProperty.PropertyType.GetElementType();
+                                var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
+                                for (var i = 0; i < array.Length; i++)
+                                {
+                                    var mappedType = Map(array.GetValue(i), elementType);
+                                    mappedArray.SetValue(mappedType, i);
+                                }
+                                backingField.SetValue(result, mappedArray);
+                            }
+                        }
+                        else if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
                         {
                             var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
                             backingField.SetValue(mergeResult, sourceValue);
