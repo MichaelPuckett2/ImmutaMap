@@ -1,4 +1,7 @@
-﻿using System;
+﻿using ImmutaMap.Exceptions;
+using ImmutaMap.Interfaces;
+using ImmutaMap.ReflectionTools;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -8,11 +11,22 @@ namespace ImmutaMap
 {
     public class ImmutaMapper
     {
-        private Mapper Mapper { get; } = new Mapper();
-        private ImmutaMapper() { }
-        public static ImmutaMapper Build(Action<Mapper> getMap = null)
+        public ICustomActivator CustomActivator { get; }
+        public IMapper Mapper { get; } 
+
+        private ImmutaMapper(
+            ICustomActivator customActivator,
+            IMapper mapper)
         {
-            var immutaMapper = new ImmutaMapper();
+            CustomActivator = customActivator;
+            Mapper = mapper;
+        }
+
+        public static ImmutaMapper Build(Action<IMapper> getMap = null)
+        {
+            var customActivator = new CustomActivator();
+            var mapper = new Mapper();
+            var immutaMapper = new ImmutaMapper(customActivator, mapper);
             getMap?.Invoke(immutaMapper.Mapper);
             return immutaMapper;
         }
@@ -22,16 +36,8 @@ namespace ImmutaMap
         {
             var sourceType = source.GetType();
             var sourceProperties = sourceType.GetProperties().ToList();
+            object result = CustomActivator.GetInstanceIgnoringCustomConstructors(resultType);
 
-            object result;
-            if (!resultType.GetConstructors().Where(x => !x.GetParameters().Any()).Any())
-            {
-                result = FormatterServices.GetUninitializedObject(resultType);
-            }
-            else
-            {
-                result = Activator.CreateInstance(resultType);
-            }
             var resultProperties = resultType.GetProperties().ToList();
 
             var joinedProperties = sourceProperties.Join(
@@ -56,6 +62,7 @@ namespace ImmutaMap
                 if (join.ResultProperty.CanWrite)
                 {
                     var sourceValue = join.SourceProperty.GetValue(source);
+
                     if (join.SourceProperty.PropertyType.IsArray)
                     {
                         var array = (Array)sourceValue;
@@ -122,23 +129,14 @@ namespace ImmutaMap
                                 var elementType = join.ResultProperty.PropertyType.GetElementType();
                                 var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
 
-                                if (array.Rank > 1)
+                                if (array.Rank > 1) throw new MultiDimensionMergeException();
+
+                                for (var index = 0; index < array.Length; index++)
                                 {
-                                    for (var rank = 0; rank < array.Rank; rank++)
-                                        for (var index = 0; index < array.Length; index++)
-                                        {
-                                            var mappedType = Map(array.GetValue(rank, index), elementType);
-                                            mappedArray.SetValue(mappedType, rank, index);
-                                        }
+                                    var mappedType = Map(array.GetValue(index), elementType);
+                                    mappedArray.SetValue(mappedType, index);
                                 }
-                                else
-                                {
-                                    for (var index = 0; index < array.Length; index++)
-                                    {
-                                        var mappedType = Map(array.GetValue(index), elementType);
-                                        mappedArray.SetValue(mappedType, index);
-                                    }
-                                }
+
                                 backingField.SetValue(result, mappedArray);
                             }
                         }

@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using ImmutaMap.Interfaces;
+using System.Collections.Generic;
 
 namespace ImmutaMap
 {
-    public class Mapper
+    public class Mapper : IMapper
     {
         public IEnumerable<PropertyMap> Maps { get; } = new List<PropertyMap>();
         public Mapper MapProperty(string sourcePropertyName, string resultPropertyName)
