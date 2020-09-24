@@ -120,11 +120,24 @@ namespace ImmutaMap
                             else
                             {
                                 var elementType = join.ResultProperty.PropertyType.GetElementType();
-                                var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
-                                for (var i = 0; i < array.Length; i++)
+                                var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
+
+                                if (array.Rank > 1)
                                 {
-                                    var mappedType = Map(array.GetValue(i), elementType);
-                                    mappedArray.SetValue(mappedType, i);
+                                    for (var rank = 0; rank < array.Rank; rank++)
+                                        for (var index = 0; index < array.Length; index++)
+                                        {
+                                            var mappedType = Map(array.GetValue(rank, index), elementType);
+                                            mappedArray.SetValue(mappedType, rank, index);
+                                        }
+                                }
+                                else
+                                {
+                                    for (var index = 0; index < array.Length; index++)
+                                    {
+                                        var mappedType = Map(array.GetValue(index), elementType);
+                                        mappedArray.SetValue(mappedType, index);
+                                    }
                                 }
                                 backingField.SetValue(result, mappedArray);
                             }
