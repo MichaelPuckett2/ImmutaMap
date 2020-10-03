@@ -2,6 +2,8 @@
 using ImmutaMap.Interfaces;
 using ImmutaMap.ReflectionTools;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +14,7 @@ namespace ImmutaMap
     public class ImmutaMapper
     {
         public ICustomActivator CustomActivator { get; }
-        public IMapper Mapper { get; } 
+        public IMapper Mapper { get; }
 
         private ImmutaMapper(
             ICustomActivator customActivator,
@@ -36,26 +38,10 @@ namespace ImmutaMap
         {
             var sourceType = source.GetType();
             var sourceProperties = sourceType.GetProperties().ToList();
-            object result = CustomActivator.GetInstanceIgnoringCustomConstructors(resultType);
-
+            var result = CustomActivator.GetInstanceIgnoringCustomConstructors(resultType);
             var resultProperties = resultType.GetProperties().ToList();
-
-            var joinedProperties = sourceProperties.Join(
-                resultProperties,
-                sourceProperty => sourceProperty.Name.ToLower(),
-                resultProperty => resultProperty.Name.ToLower(),
-                (sourceProperty, resultProperty) => new { SourceProperty = sourceProperty, ResultProperty = resultProperty })
-                .ToList();
-
-            foreach (var map in Mapper.Maps)
-            {
-                var sourceProperty = sourceProperties.FirstOrDefault(x => x.Name == map.SourcePropertyName);
-                if (sourceProperty == null) continue;
-                var resultProperty = resultProperties.FirstOrDefault(x => x.Name == map.ResultPropertyName);
-                if (resultProperty == null) continue;
-                if (joinedProperties.Any(x => x.SourceProperty == sourceProperty && x.ResultProperty == resultProperty)) continue;
-                joinedProperties.Add(new { SourceProperty = sourceProperty, ResultProperty = resultProperty });
-            }
+            var joinedProperties = GetSourceResultPropeties(sourceProperties, resultProperties);
+            AddMappedProperties(sourceProperties, resultProperties, joinedProperties);
 
             foreach (var join in joinedProperties.ToList())
             {
@@ -63,38 +49,17 @@ namespace ImmutaMap
                 {
                     var sourceValue = join.SourceProperty.GetValue(source);
 
-                    if (join.SourceProperty.PropertyType.IsArray)
+                    switch (sourceValue) //TODO:  Try to figure out how to implement custom mapper interfaces for various types.
+
+
+                    if (sourceValue == null)
                     {
-                        var array = (Array)sourceValue;
-                        if (array == null)
-                        {
-                            join.ResultProperty.SetValue(result, null);
-                        }
-                        else
-                        {
-                            var elementType = join.ResultProperty.PropertyType.GetElementType();
-                            var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
-                            for (var i = 0; i < array.Length; i++)
-                            {
-                                var mappedType = Map(array.GetValue(i), elementType);
-                                mappedArray.SetValue(mappedType, i);
-                            }
-                            join.ResultProperty.SetValue(result, mappedArray);
-                        }
+                        join.ResultProperty.SetValue(result, null);
                     }
-                    //else if (!(sourceValue is string) && sourceValue is IEnumerable enumerable)
-                    //{
-                    //    switch (enumerable)
-                    //    {
-                    //        case Array array:
-                    //            var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
-
-                    //            break;
-
-                    //        default:
-                    //            break;
-                    //    }
-                    //}
+                    else if (join.SourceProperty.PropertyType.IsArray)
+                    {
+                        MapSourceArray(result, join, (Array)sourceValue);
+                    }
                     else
                     {
                         if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
@@ -163,6 +128,41 @@ namespace ImmutaMap
             }
 
             return result;
+        }
+
+        private void MapSourceArray(object result, SourceResultProperty join, Array array)
+        {
+            var elementType = join.ResultProperty.PropertyType.GetElementType();
+            var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
+            for (var i = 0; i < array.Length; i++)
+            {
+                var mappedType = Map(array.GetValue(i), elementType);
+                mappedArray.SetValue(mappedType, i);
+            }
+            join.ResultProperty.SetValue(result, mappedArray);
+        }
+
+        private void AddMappedProperties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<SourceResultProperty> joinedProperties)
+        {
+            foreach (var map in Mapper.Maps)
+            {
+                var sourceProperty = sourceProperties.FirstOrDefault(x => x.Name == map.SourcePropertyName);
+                if (sourceProperty == null) continue;
+                var resultProperty = resultProperties.FirstOrDefault(x => x.Name == map.ResultPropertyName);
+                if (resultProperty == null) continue;
+                if (joinedProperties.Any(x => x.SourceProperty == sourceProperty && x.ResultProperty == resultProperty)) continue;
+                joinedProperties.Add(new SourceResultProperty(sourceProperty, resultProperty));
+            }
+        }
+
+        private static List<SourceResultProperty> GetSourceResultPropeties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties)
+        {
+            return sourceProperties.Join(
+                resultProperties,
+                sourceProperty => sourceProperty.Name.ToLower(),
+                resultProperty => resultProperty.Name.ToLower(),
+                (sourceProperty, resultProperty) => new SourceResultProperty(sourceProperty, resultProperty))
+                .ToList();
         }
     }
 }
