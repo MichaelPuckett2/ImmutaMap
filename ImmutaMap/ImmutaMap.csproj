@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>A simplified mapper that also works with immutable types.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>Automapper, Mapper, Map, IMap, Immutable,</PackageTags>
+    <PackageTags>Automapper, Mapper, Map, IMap, Immutable, Attribute Map</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

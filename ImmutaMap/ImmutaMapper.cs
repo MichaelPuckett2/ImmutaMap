@@ -162,7 +162,7 @@ namespace ImmutaMap
         private void MapSourceArray(object result, SourceResultProperty join, Array array)
         {
             var elementType = join.ResultProperty.PropertyType.GetElementType();
-            var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Length), array.Length);
+            var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
             for (var i = 0; i < array.Length; i++)
             {
                 var mappedType = Map(array.GetValue(i), elementType);
