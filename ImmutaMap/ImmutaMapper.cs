@@ -2,12 +2,10 @@
 using ImmutaMap.Interfaces;
 using ImmutaMap.ReflectionTools;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 
 namespace ImmutaMap
 {
@@ -49,70 +47,101 @@ namespace ImmutaMap
                 {
                     var sourceValue = join.SourceProperty.GetValue(source);
 
-                    switch (sourceValue) //TODO:  Try to figure out how to implement custom mapper interfaces for various types.
+                    var attributeType = join
+                        .ResultProperty
+                        .GetCustomAttributes()
+                        .Where(x => Mapper.AttributeFunctions.Where(attributeFunction => attributeFunction.Key == x.GetType())
+                        .Any())
+                        .Select(x => new { Attribute = x, AttributeType = x.GetType() })
+                        .FirstOrDefault();
 
-
-                    if (sourceValue == null)
+                    if (attributeType != null)
                     {
-                        join.ResultProperty.SetValue(result, null);
-                    }
-                    else if (join.SourceProperty.PropertyType.IsArray)
-                    {
-                        MapSourceArray(result, join, (Array)sourceValue);
+                        var func = Mapper.AttributeFunctions[attributeType.AttributeType];
+                        join.SourceProperty.SetValue(result, func.Invoke(attributeType.Attribute, sourceValue));
                     }
                     else
                     {
-                        if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+
+                        if (sourceValue == null)
                         {
-                            var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
-                            join.ResultProperty.SetValue(result, mappedType);
+                            join.ResultProperty.SetValue(result, null);
+                        }
+                        else if (join.SourceProperty.PropertyType.IsArray)
+                        {
+                            MapSourceArray(result, join, (Array)sourceValue);
                         }
                         else
                         {
-                            join.ResultProperty.SetValue(result, sourceValue);
+                            if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                            {
+                                var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
+                                join.ResultProperty.SetValue(result, mappedType);
+                            }
+                            else
+                            {
+                                join.ResultProperty.SetValue(result, sourceValue);
+                            }
                         }
                         joinedProperties.Remove(join);
                     }
                 }
                 else
                 {
-                    var fields = resultType
-                        .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    var fields = resultType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
                     var backingField = fields.FirstOrDefault(x => x.Name == $"<{join.ResultProperty.Name}>k__BackingField");
+
                     if (backingField != null)
                     {
                         var sourceValue = join.SourceProperty.GetValue(source);
-                        if (join.SourceProperty.PropertyType.IsArray)
+
+                        var attributeType = join
+                            .ResultProperty
+                            .GetCustomAttributes()
+                            .Where(x => Mapper.AttributeFunctions.Where(attributeFunction => attributeFunction.Key == x.GetType())
+                            .Any())
+                            .Select(x => new { Attribute = x, AttributeType = x.GetType() })
+                            .FirstOrDefault();
+
+                        if (attributeType != null)
                         {
-                            var array = (Array)sourceValue;
-                            if (array == null)
-                            {
-                                backingField.SetValue(result, null);
-                            }
-                            else
-                            {
-                                var elementType = join.ResultProperty.PropertyType.GetElementType();
-                                var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
-
-                                if (array.Rank > 1) throw new MultiDimensionMergeException();
-
-                                for (var index = 0; index < array.Length; index++)
-                                {
-                                    var mappedType = Map(array.GetValue(index), elementType);
-                                    mappedArray.SetValue(mappedType, index);
-                                }
-
-                                backingField.SetValue(result, mappedArray);
-                            }
-                        }
-                        else if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
-                        {
-                            var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
-                            backingField.SetValue(mergeResult, sourceValue);
+                            var func = Mapper.AttributeFunctions[attributeType.AttributeType];
+                            backingField.SetValue(result, func.Invoke(attributeType.Attribute, sourceValue));
                         }
                         else
                         {
-                            backingField.SetValue(result, sourceValue);
+                            if (join.SourceProperty.PropertyType.IsArray)
+                            {
+                                var array = (Array)sourceValue;
+                                if (array == null)
+                                {
+                                    backingField.SetValue(result, null);
+                                }
+                                else
+                                {
+                                    var elementType = join.ResultProperty.PropertyType.GetElementType();
+                                    var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
+
+                                    if (array.Rank > 1) throw new MultiDimensionMergeException();
+
+                                    for (var index = 0; index < array.Length; index++)
+                                    {
+                                        var mappedType = Map(array.GetValue(index), elementType);
+                                        mappedArray.SetValue(mappedType, index);
+                                    }
+
+                                    backingField.SetValue(result, mappedArray);
+                                }
+                            }
+                            else if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                            {
+                                var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
+                                backingField.SetValue(mergeResult, sourceValue);
+                            }
+                            else
+                            {
+                                backingField.SetValue(result, sourceValue);
+                            }
                         }
                         joinedProperties.Remove(join);
                     }
