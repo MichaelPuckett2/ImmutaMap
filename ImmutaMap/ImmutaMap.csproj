@@ -5,6 +5,12 @@
     <Description>A simplified mapper that also works with immutable types.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Automapper, Mapper, Map, IMap, Immutable, Attribute Map</PackageTags>
+    <Copyright>@2020</Copyright>
+    <PackageProjectUrl>https://github.com/MichaelPuckett2/ImmutaMap</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MichaelPuckett2/ImmutaMap</RepositoryUrl>
+    <Company>Triple G3</Company>
+    <Authors>Michael Puckett, II</Authors>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -59,14 +59,22 @@ namespace ImmutaMap
                     {
                         var func = Mapper.AttributeFunctions[attributeType.AttributeType];
                         join.SourceProperty.SetValue(result, func.Invoke(attributeType.Attribute, sourceValue));
+
+                        if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                        }
                     }
                     else
                     {
-
-                        if (sourceValue == null)
+                        if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                        }
+                        else if(sourceValue == null)
                         {
                             join.ResultProperty.SetValue(result, null);
-                        }
+                        }                         
                         else if (join.SourceProperty.PropertyType.IsArray)
                         {
                             MapSourceArray(result, join, (Array)sourceValue);
@@ -107,6 +115,15 @@ namespace ImmutaMap
                         {
                             var func = Mapper.AttributeFunctions[attributeType.AttributeType];
                             backingField.SetValue(result, func.Invoke(attributeType.Attribute, sourceValue));
+
+                            if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
+                            {
+                                join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                            }
+                        }
+                        else if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
                         }
                         else
                         {
