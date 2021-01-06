@@ -7,7 +7,8 @@ namespace ImmutaMap.Interfaces
     {
         IEnumerable<PropertyMap> Maps { get; }
         IDictionary<Type, Func<Attribute, object, object>> AttributeFunctions { get; }
-        IDictionary<string, Func<string, object, object>> SourcePropertyFunctions { get; }
+        IDictionary<string, Func<object, object>> SourcePropertyFunctions { get; }
+        IDictionary<string, Func<object>> SourcePropertyFunctions2 { get; }
         /// <summary>
         /// Maps the source property name to the property on the result being instantiated.
         /// </summary>
@@ -23,6 +24,7 @@ namespace ImmutaMap.Interfaces
         /// <param name="func">A function invoked with parameters of the Attribute and the source property value.</param>
         /// <returns></returns>
         Mapper WithAttribute<T>(Func<T, object, object> func) where T : Attribute;
-        Mapper WithSourceProperty(string propertyName, Func<string, object, object> func);
+        Mapper WithSourceProperty(string propertyName, Func<object, object> func);
+        Mapper WithSourceProperty(string propertyName, Func<object> func);
     }
 }

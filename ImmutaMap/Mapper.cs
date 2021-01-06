@@ -7,12 +7,14 @@ namespace ImmutaMap
     public class Mapper : IMapper
     {
         private readonly IDictionary<Type, Func<Attribute, object, object>> attributeFunctions = new Dictionary<Type, Func<Attribute, object, object>>();
-        private readonly IDictionary<string, Func<string, object, object>> sourcePropertyFunctions = new Dictionary<string, Func<string, object, object>>();
+        private readonly IDictionary<string, Func<object, object>> sourcePropertyFunctions = new Dictionary<string, Func<object, object>>();
+        private readonly IDictionary<string, Func<object>> sourcePropertyFunctions2 = new Dictionary<string, Func<object>>();
         private readonly IList<PropertyMap> maps = new List<PropertyMap>();
 
         public IEnumerable<PropertyMap> Maps => maps;
         public IDictionary<Type, Func<Attribute, object, object>> AttributeFunctions => attributeFunctions;
-        public IDictionary<string, Func<string, object, object>> SourcePropertyFunctions => sourcePropertyFunctions;
+        public IDictionary<string, Func<object, object>> SourcePropertyFunctions => sourcePropertyFunctions;
+        public IDictionary<string, Func<object>> SourcePropertyFunctions2 => sourcePropertyFunctions2;
 
         public Mapper MapProperty(string sourcePropertyName, string resultPropertyName)
         {
@@ -26,9 +28,15 @@ namespace ImmutaMap
             return this;
         }
 
-        public Mapper WithSourceProperty(string propertyName, Func<string, object, object> func)
+        public Mapper WithSourceProperty(string propertyName, Func<object, object> func)
         {
-            sourcePropertyFunctions.Add(propertyName, new Func<string, object, object>((property, target) => func.Invoke(property, target)));
+            sourcePropertyFunctions.Add(propertyName, new Func<object, object>((value) => func.Invoke(value)));
+            return this;
+        }
+
+        public Mapper WithSourceProperty(string propertyName, Func<object> func)
+        {
+            sourcePropertyFunctions2.Add(propertyName, new Func<object>(() => func.Invoke()));
             return this;
         }
     }

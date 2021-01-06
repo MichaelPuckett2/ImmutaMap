@@ -62,14 +62,22 @@ namespace ImmutaMap
 
                         if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                         {
-                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
+                        }
+                        else if (Mapper.SourcePropertyFunctions2.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
                         }
                     }
                     else
                     {
                         if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                         {
-                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
+                        }
+                        else if (Mapper.SourcePropertyFunctions2.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
                         }
                         else if(sourceValue == null)
                         {
@@ -118,12 +126,16 @@ namespace ImmutaMap
 
                             if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                             {
-                                join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                                join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
                             }
                         }
                         else if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                         {
-                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(join.SourceProperty.Name, sourceValue));
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
+                        }
+                        else if (Mapper.SourcePropertyFunctions2.ContainsKey(join.SourceProperty.Name))
+                        {
+                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
                         }
                         else
                         {
