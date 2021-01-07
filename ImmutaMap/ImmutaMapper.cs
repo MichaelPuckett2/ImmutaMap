@@ -126,16 +126,16 @@ namespace ImmutaMap
 
                             if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                             {
-                                join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
+                                backingField.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
                             }
                         }
                         else if (Mapper.SourcePropertyFunctions.ContainsKey(join.SourceProperty.Name))
                         {
-                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
+                            backingField.SetValue(result, Mapper.SourcePropertyFunctions[join.SourceProperty.Name].Invoke(sourceValue));
                         }
                         else if (Mapper.SourcePropertyFunctions2.ContainsKey(join.SourceProperty.Name))
                         {
-                            join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
+                            backingField.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
                         }
                         else
                         {
