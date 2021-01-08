@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/MichaelPuckett2/ImmutaMap</RepositoryUrl>
     <Company>Triple G3</Company>
     <Authors>Michael Puckett, II</Authors>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
@@ -19,6 +19,10 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
 
 </Project>
