@@ -5,9 +5,8 @@ namespace ImmutaMap
 {
     public static class ImmutaMapperExtensions
     {
-        public static T With<T>(this T t, Func<dynamic> func)
+        public static T With<T>(this T t, dynamic a)
         {
-            var a = func.Invoke();
             var properties = new List<(string Name, object Value)>();
             foreach (var prop in a.GetType().GetProperties())
             {
