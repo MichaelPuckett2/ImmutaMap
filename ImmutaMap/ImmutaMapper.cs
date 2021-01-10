@@ -89,7 +89,9 @@ namespace ImmutaMap
                         }
                         else
                         {
-                            if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                            if (join.SourceProperty.PropertyType.IsClass 
+                                && join.SourceProperty.PropertyType != typeof(string)
+                                && join.SourceProperty.PropertyType != typeof(Enumerable))
                             {
                                 var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
                                 join.ResultProperty.SetValue(result, mappedType);
@@ -162,7 +164,9 @@ namespace ImmutaMap
                                     backingField.SetValue(result, mappedArray);
                                 }
                             }
-                            else if (join.SourceProperty.PropertyType.IsClass && join.SourceProperty.PropertyType != typeof(string))
+                            else if (join.SourceProperty.PropertyType.IsClass 
+                                && join.SourceProperty.PropertyType != typeof(string)
+                                && join.SourceProperty.PropertyType != typeof(Enumerable))
                             {
                                 var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
                                 backingField.SetValue(mergeResult, sourceValue);
