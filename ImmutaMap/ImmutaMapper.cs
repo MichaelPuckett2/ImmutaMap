@@ -1,5 +1,4 @@
-﻿using ImmutaMap.Exceptions;
-using ImmutaMap.Interfaces;
+﻿using ImmutaMap.Interfaces;
 using ImmutaMap.ReflectionTools;
 using System;
 using System.Collections.Generic;
@@ -79,27 +78,13 @@ namespace ImmutaMap
                         {
                             join.ResultProperty.SetValue(result, Mapper.SourcePropertyFunctions2[join.SourceProperty.Name].Invoke());
                         }
-                        else if(sourceValue == null)
+                        else if (sourceValue == null)
                         {
                             join.ResultProperty.SetValue(result, null);
-                        }                         
-                        else if (join.SourceProperty.PropertyType.IsArray)
-                        {
-                            MapSourceArray(result, join, (Array)sourceValue);
                         }
                         else
                         {
-                            if (join.SourceProperty.PropertyType.IsClass 
-                                && join.SourceProperty.PropertyType != typeof(string)
-                                && join.SourceProperty.PropertyType != typeof(Enumerable))
-                            {
-                                var mappedType = Map(sourceValue, join.ResultProperty.PropertyType);
-                                join.ResultProperty.SetValue(result, mappedType);
-                            }
-                            else
-                            {
-                                join.ResultProperty.SetValue(result, sourceValue);
-                            }
+                            join.ResultProperty.SetValue(result, sourceValue);
                         }
                         joinedProperties.Remove(join);
                     }
@@ -141,40 +126,7 @@ namespace ImmutaMap
                         }
                         else
                         {
-                            if (join.SourceProperty.PropertyType.IsArray)
-                            {
-                                var array = (Array)sourceValue;
-                                if (array == null)
-                                {
-                                    backingField.SetValue(result, null);
-                                }
-                                else
-                                {
-                                    var elementType = join.ResultProperty.PropertyType.GetElementType();
-                                    var mappedArray = (Array)Activator.CreateInstance(elementType.MakeArrayType(array.Rank), array.Length);
-
-                                    if (array.Rank > 1) throw new MultiDimensionMergeException();
-
-                                    for (var index = 0; index < array.Length; index++)
-                                    {
-                                        var mappedType = Map(array.GetValue(index), elementType);
-                                        mappedArray.SetValue(mappedType, index);
-                                    }
-
-                                    backingField.SetValue(result, mappedArray);
-                                }
-                            }
-                            else if (join.SourceProperty.PropertyType.IsClass 
-                                && join.SourceProperty.PropertyType != typeof(string)
-                                && join.SourceProperty.PropertyType != typeof(Enumerable))
-                            {
-                                var mergeResult = Map(sourceValue, join.ResultProperty.PropertyType);
-                                backingField.SetValue(mergeResult, sourceValue);
-                            }
-                            else
-                            {
-                                backingField.SetValue(result, sourceValue);
-                            }
+                            backingField.SetValue(result, sourceValue);
                         }
                         joinedProperties.Remove(join);
                     }
