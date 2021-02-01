@@ -21,6 +21,42 @@ namespace ImmutaMap
             Mapper = mapper;
         }
 
+        /// <summary>
+        /// Creates a new empty type ignoring constructors.  All fields / properties are set to their inherit default values.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns>Instantiated T with all properties as default value.</returns>
+        public static T New<T>()
+        {
+            var customActivator = new CustomActivator();
+            var t = (T)customActivator.GetInstanceIgnoringCustomConstructors(typeof(T));
+            return t;
+        }
+
+        /// <summary>
+        /// Creates a new empty type ignoring constructors.  All fields / properties are set to their inherit default values except for properties found in any passed in anonymous type properties.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="a">anonymous type used to initialize any matching properties of T.</param>
+        /// <returns>Instantiated T with all propeties as default value except for properies found in passed in anonymous type.</returns>
+        public static T New<T>(dynamic a)
+        {
+            var customActivator = new CustomActivator();
+            var t = (T)customActivator.GetInstanceIgnoringCustomConstructors(typeof(T));
+            var properties = new List<(string Name, object Value)>();
+            foreach (var prop in a.GetType().GetProperties())
+            {
+                var foundProp = typeof(T).GetProperty(prop.Name);
+                if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
+            }
+
+            return ImmutaMapper.Build(mapper =>
+            {
+                foreach (var (Name, Value) in properties) mapper.WithSourceProperty(Name, () => Value);
+            })
+            .Map<T>(t);
+        }
+
         public static ImmutaMapper Build(Action<IMapper> getMap = null)
         {
             var customActivator = new CustomActivator();

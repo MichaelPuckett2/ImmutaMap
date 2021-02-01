@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImmutaMap.ReflectionTools;
+using System;
 using System.Collections.Generic;
 
 namespace ImmutaMap
