@@ -1,9 +1,11 @@
 ﻿using ImmutaMap.Interfaces;
+using ImmutaMap.Utilities;
 using Specky.Attributes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
+using System.Reflection;
 
 namespace ImmutaMap
 {
@@ -34,47 +36,63 @@ namespace ImmutaMap
             var sourcePropertyInfos = typeof(TSource).GetProperties().ToList();
             var resultPropertyInfos = typeof(TResult).GetProperties().ToList();
 
-            foreach (var sourcePropertyInfo in sourcePropertyInfos)
+            var joinedPropertInfos = GetSourceResultPropeties(sourcePropertyInfos, resultPropertyInfos);
+            AddMappedProperties(map, sourcePropertyInfos, resultPropertyInfos, joinedPropertInfos);
+
+            foreach (var (sourcePropertyInfo, resultPropertyInfo) in joinedPropertInfos)
             {
-                foreach (var resultPropertyInfo in resultPropertyInfos)
-                {           
-                    foreach (var propertyMap in map.PropertyMaps)
+                if (sourcePropertyInfo.PropertyType != typeof(string) 
+                && typeof(IEnumerable).IsAssignableFrom(sourcePropertyInfo.PropertyType)
+                && typeof(IEnumerable).IsAssignableFrom(resultPropertyInfo.PropertyType))
+                {
+                    var genericType = sourcePropertyInfo.PropertyType.GenericTypeArguments.FirstOrDefault();
+
+                    if (genericType != null)
                     {
-                        if (propertyMap.SourceProperty == sourcePropertyInfo.Name
-                        && propertyMap.ResultProperty == resultPropertyInfo.Name)
+                        var resultListType = typeof(List<>);
+                        var listOfType = resultListType.MakeGenericType(genericType);
+                        var resultList = (IList)Activator.CreateInstance(listOfType);
+                        foreach (var sourceValue in (IEnumerable)sourcePropertyInfo.GetValue(map.Source))
                         {
-
+                            resultList.Add(new Mapper(new TypeFormatter()).Map(sourceValue).Build()); //TODO: This needs to be Mapped also.
                         }
+                        resultPropertyInfo.SetValue(result, resultList);
                     }
-                    if (sourcePropertyInfo.Name == resultPropertyInfo.Name)
-                    {
-                        resultPropertyInfo.SetValue(result, sourcePropertyInfo.GetValue(map.Source));
-                        break;
-                    }
-
-
+                }
+                else
+                {
+                    resultPropertyInfo.SetValue(result, sourcePropertyInfo.GetValue(map.Source));
                 }
             }
         }
+
+        private void AddMappedProperties<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedProperties)
+        {
+            foreach (var propertyMap in map.PropertyMaps)
+            {
+                var sourceProperty = sourceProperties.FirstOrDefault(x => x.Name == propertyMap.SourceProperty);
+                if (sourceProperty == null) continue;
+                var resultProperty = resultProperties.FirstOrDefault(x => x.Name == propertyMap.ResultProperty);
+                if (resultProperty == null) continue;
+                if (joinedProperties.Any(x => x.sourcePropertyInfo.Name == propertyMap.SourceProperty && x.resultPropertyInfo.Name == propertyMap.ResultProperty)) continue;
+                joinedProperties.Add((sourceProperty, resultProperty));
+            }
+        }
+
+        private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultPropeties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties)
+        {
+            return sourceProperties.Join(resultProperties,
+                sourceProperty => sourceProperty.Name,
+                resultProperty => resultProperty.Name,
+                (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
+                .ToList();
+        }
     }
 
-    public class Map<TSource, TResult>
+    public class PropertyMap
     {
-        private readonly List<(string SourceProperty, string ResultProperty)> propertyMaps = new List<(string SourceProperty, string ResultProperty)>();
-        public Map(TSource source)
-        {
-            Source = source;
-        }
-
-        public IEnumerable<(string SourceProperty, string ResultProperty)> PropertyMaps => propertyMaps.ToList();
-
-        public TSource Source { get; }
-
-        public void MapProperty(Expression<Func<TSource, object>> sourceExpression, Expression<Func<TResult, object>> resultExpression)
-        {
-            if (sourceExpression.Body is MemberExpression sourceMemberExpression
-            && resultExpression.Body is MemberExpression resultMemberExpression)
-            propertyMaps.Add((sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name));
-        }
+        public PropertyInfo SourcePropertyInfo { get; }
+        public PropertyInfo ResultPropertyInfo { get; }
+        public Func<PropertyInfo, PropertyInfo, object> Map { get; }
     }
 }
