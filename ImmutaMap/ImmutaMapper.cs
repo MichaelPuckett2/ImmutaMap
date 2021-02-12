@@ -50,7 +50,7 @@ namespace ImmutaMap
                 if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
             }
 
-            return ImmutaMapper.Build(mapper =>
+            return Build(mapper =>
             {
                 foreach (var (Name, Value) in properties) mapper.WithSourceProperty(Name, () => Value);
             })
