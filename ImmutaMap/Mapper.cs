@@ -34,30 +34,30 @@ namespace ImmutaMap
             return result;
         }
 
-        private void Copy<TSource, TResult>(Map<TSource, TResult> map, TResult result)
+        private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TTarget target)
         {
             var sourcePropertyInfos = typeof(TSource).GetProperties().ToList();
-            var resultPropertyInfos = typeof(TResult).GetProperties().ToList();
+            var targetPropertyInfos = typeof(TTarget).GetProperties().ToList();
 
-            var joinedPropertInfos = GetSourceResultPropeties(sourcePropertyInfos, resultPropertyInfos);
-            AddPropertyNameMaps(map, sourcePropertyInfos, resultPropertyInfos, joinedPropertInfos);
+            var joinedPropertyInfos = GetSourceResultPropeties(sourcePropertyInfos, targetPropertyInfos);
+            AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 
-            foreach (var (sourcePropertyInfo, resultPropertyInfo) in joinedPropertInfos)
+            foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
             {
                 var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
                 if (map.PropertyMapFuncs.Keys.Contains(propertyMapFuncsKey))
                 {
                     var func = map.PropertyMapFuncs[propertyMapFuncsKey];
-                    var resultValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
-                    resultPropertyInfo.SetValue(result, resultValue);
+                    var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
+                    SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
                 else if (sourcePropertyInfo.PropertyType != typeof(string)
                 && typeof(IEnumerable).IsAssignableFrom(sourcePropertyInfo.PropertyType)
-                && typeof(IEnumerable).IsAssignableFrom(resultPropertyInfo.PropertyType))
+                && typeof(IEnumerable).IsAssignableFrom(targetPropertyInfo.PropertyType))
                 {
-                    if (sourcePropertyInfo.PropertyType != resultPropertyInfo.PropertyType)
+                    if (sourcePropertyInfo.PropertyType != targetPropertyInfo.PropertyType)
                     {
-                        throw new EnumerableTypeMismatchException(sourcePropertyInfo.PropertyType, resultPropertyInfo.PropertyType);
+                        throw new EnumerableTypeMismatchException(sourcePropertyInfo.PropertyType, targetPropertyInfo.PropertyType);
                     }
 
                     //var sourceGenericType = sourcePropertyInfo.PropertyType.GenericTypeArguments.FirstOrDefault();
@@ -76,7 +76,26 @@ namespace ImmutaMap
                 }
                 else
                 {
-                    resultPropertyInfo.SetValue(result, sourcePropertyInfo.GetValue(map.Source));
+                    var targetValue = sourcePropertyInfo.GetValue(map.Source);
+                    SetTargetValue(target, targetPropertyInfo, targetValue);
+                }
+            }
+        }
+
+        private static void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
+        {
+            if (targetPropertyInfo.CanWrite)
+            {
+                targetPropertyInfo.SetValue(target, targetValue);
+            }
+            else
+            {
+                var fields = typeof(TTarget).GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
+
+                if (backingField != null)
+                {
+                    backingField.SetValue(target, targetValue);
                 }
             }
         }
