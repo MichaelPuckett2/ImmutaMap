@@ -102,5 +102,5 @@ namespace ImmutaMap
                 (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
                 .ToList();
         }
-    }   
+    }
 }
