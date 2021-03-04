@@ -1,5 +1,5 @@
-﻿using ImmutaMap.Interfaces;
-using ImmutaMap.Utilities;
+﻿using ImmutaMap.Exceptions;
+using ImmutaMap.Interfaces;
 using Specky.Attributes;
 using System;
 using System.Collections;
@@ -19,6 +19,7 @@ namespace ImmutaMap
             this.typeFormatter = typeFormatter;
         }
 
+        //public Map Map(Type sourceType, object source) =>
         public Map<TSource, TResult> Map<TSource, TResult>(TSource source) => new Map<TSource, TResult>(source);
 
         public TResult Build<TSource, TResult>(Map<TSource, TResult> map, Func<object[]> args = null)
@@ -45,16 +46,21 @@ namespace ImmutaMap
                 && typeof(IEnumerable).IsAssignableFrom(sourcePropertyInfo.PropertyType)
                 && typeof(IEnumerable).IsAssignableFrom(resultPropertyInfo.PropertyType))
                 {
-                    var genericType = sourcePropertyInfo.PropertyType.GenericTypeArguments.FirstOrDefault();
-
-                    if (genericType != null)
+                    if (sourcePropertyInfo.PropertyType != resultPropertyInfo.PropertyType)
                     {
-                        var resultListType = typeof(List<>);
-                        var listOfType = resultListType.MakeGenericType(genericType);
-                        var resultList = (IList)Activator.CreateInstance(listOfType);
+                        throw new EnumerableTypeMismatchException(sourcePropertyInfo.PropertyType, resultPropertyInfo.PropertyType);
+                    }
+
+                    var sourceGenericType = sourcePropertyInfo.PropertyType.GenericTypeArguments.FirstOrDefault();
+
+                    if (sourceGenericType != null)
+                    {
+                        var genericList = typeof(List<>);
+                        var resultListOfType = genericList.MakeGenericType(sourceGenericType);
+                        var resultList = (IList)Activator.CreateInstance(resultListOfType);
                         foreach (var sourceValue in (IEnumerable)sourcePropertyInfo.GetValue(map.Source))
                         {
-                            resultList.Add(new Mapper(new TypeFormatter()).Map(sourceValue).Build()); //TODO: This needs to be Mapped also.
+                            //resultList.Add(new Mapper(new TypeFormatter()).Map(sourceValue).Build()); //TODO: This needs to be Mapped also.
                         }
                         resultPropertyInfo.SetValue(result, resultList);
                     }
