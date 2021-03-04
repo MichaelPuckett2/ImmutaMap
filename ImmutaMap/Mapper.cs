@@ -38,11 +38,18 @@ namespace ImmutaMap
             var resultPropertyInfos = typeof(TResult).GetProperties().ToList();
 
             var joinedPropertInfos = GetSourceResultPropeties(sourcePropertyInfos, resultPropertyInfos);
-            AddMappedProperties(map, sourcePropertyInfos, resultPropertyInfos, joinedPropertInfos);
+            AddPropertyNameMaps(map, sourcePropertyInfos, resultPropertyInfos, joinedPropertInfos);
 
             foreach (var (sourcePropertyInfo, resultPropertyInfo) in joinedPropertInfos)
             {
-                if (sourcePropertyInfo.PropertyType != typeof(string) 
+                var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
+                if (map.PropertyMapFuncs.Keys.Contains(propertyMapFuncsKey))
+                {
+                    var func = map.PropertyMapFuncs[propertyMapFuncsKey];
+                    var resultValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
+                    resultPropertyInfo.SetValue(result, resultValue);
+                }
+                else if (sourcePropertyInfo.PropertyType != typeof(string)
                 && typeof(IEnumerable).IsAssignableFrom(sourcePropertyInfo.PropertyType)
                 && typeof(IEnumerable).IsAssignableFrom(resultPropertyInfo.PropertyType))
                 {
@@ -72,16 +79,16 @@ namespace ImmutaMap
             }
         }
 
-        private void AddMappedProperties<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedProperties)
+        private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
         {
-            foreach (var propertyMap in map.PropertyMaps)
+            foreach (var (sourcePropertyName, resultPropertyName) in map.PropertyNameMaps)
             {
-                var sourceProperty = sourceProperties.FirstOrDefault(x => x.Name == propertyMap.SourceProperty);
-                if (sourceProperty == null) continue;
-                var resultProperty = resultProperties.FirstOrDefault(x => x.Name == propertyMap.ResultProperty);
-                if (resultProperty == null) continue;
-                if (joinedProperties.Any(x => x.sourcePropertyInfo.Name == propertyMap.SourceProperty && x.resultPropertyInfo.Name == propertyMap.ResultProperty)) continue;
-                joinedProperties.Add((sourceProperty, resultProperty));
+                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => x.Name == sourcePropertyName);
+                if (sourcePropertyInfo == null) continue;
+                var resultPropertyInfo = resultProperties.FirstOrDefault(x => x.Name == resultPropertyName);
+                if (resultPropertyInfo == null) continue;
+                if (joinedPropertyInfos.Any(x => x.sourcePropertyInfo.Name == sourcePropertyName && x.resultPropertyInfo.Name == resultPropertyName)) continue;
+                joinedPropertyInfos.Add((sourcePropertyInfo, resultPropertyInfo));
             }
         }
 
@@ -94,6 +101,28 @@ namespace ImmutaMap
                 .ToList();
         }
     }
+
+    //private readonly IDictionary<Type, Func<Attribute, object, object>> attributeFunctions = new Dictionary<Type, Func<Attribute, object, object>>();
+    //private readonly IDictionary<string, Func<object, object>> sourcePropertyFunctions = new Dictionary<string, Func<object, object>>();
+    //private readonly IDictionary<string, Func<object>> sourcePropertyFunctions2 = new Dictionary<string, Func<object>>();
+    //private readonly IList<PropertyMap> maps = new List<PropertyMap>();
+
+    //public IEnumerable<PropertyMap> Maps => maps;
+    //public IDictionary<Type, Func<Attribute, object, object>> AttributeFunctions => attributeFunctions;
+    //public IDictionary<string, Func<object, object>> SourcePropertyFunctions => sourcePropertyFunctions;
+    //public IDictionary<string, Func<object>> SourcePropertyFunctions2 => sourcePropertyFunctions2;
+
+    //public Mapper MapProperty(string sourcePropertyName, string resultPropertyName)
+    //{
+    //    maps.Add(new PropertyMap { SourcePropertyName = sourcePropertyName, ResultPropertyName = resultPropertyName });
+    //    return this;
+    //}
+
+    //public Mapper WithAttribute<T>(Func<T, object, object> func) where T : Attribute
+    //{
+    //    attributeFunctions.Add(typeof(T), new Func<Attribute, object, object>((attribute, target) => func.Invoke((T)attribute, target)));
+    //    return this;
+    //}
 
     public class PropertyMap
     {

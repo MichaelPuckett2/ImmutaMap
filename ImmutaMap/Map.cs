@@ -8,12 +8,15 @@ namespace ImmutaMap
     public class Map<TSource, TResult>
     {
         private readonly List<(string SourceProperty, string ResultProperty)> propertyNameMaps = new List<(string SourceProperty, string ResultProperty)>();
+        private readonly IDictionary<(string, Type), Func<object, object>> propertyMapFuncs = new Dictionary<(string, Type), Func<object, object>>();
+
         public Map(TSource source)
         {
             Source = source;
         }
 
-        internal IEnumerable<(string SourceProperty, string ResultProperty)> PropertyMaps => propertyNameMaps.ToList();
+        internal IEnumerable<(string SourceProperty, string ResultProperty)> PropertyNameMaps => propertyNameMaps.ToList();
+        internal IDictionary<(string, Type), Func<object, object>> PropertyMapFuncs => propertyMapFuncs;
 
         public TSource Source { get; }
 
@@ -28,8 +31,9 @@ namespace ImmutaMap
         {
             if (sourceExpression.Body is MemberExpression sourceMemberExpression)
             {
-
+                var key = (sourceMemberExpression.Member.Name, typeof(TSourcePropertyType));
+                propertyMapFuncs.Add(key, new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue)));
             }
         }
     }
-}
+}//sourceExpression.Compile().Invoke((TSourcePropertyType)sourceValue))
