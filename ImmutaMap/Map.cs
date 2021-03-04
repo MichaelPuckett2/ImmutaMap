@@ -20,20 +20,22 @@ namespace ImmutaMap
 
         public TSource Source { get; }
 
-        public void MapPropertyName(Expression<Func<TSource, object>> sourceExpression, Expression<Func<TResult, object>> resultExpression)
+        public Map<TSource, TResult> MapPropertyName(Expression<Func<TSource, object>> sourceExpression, Expression<Func<TResult, object>> resultExpression)
         {
             if (sourceExpression.Body is MemberExpression sourceMemberExpression
             && resultExpression.Body is MemberExpression resultMemberExpression)
                 propertyNameMaps.Add((sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name));
+            return this;
         }
 
-        public void MapProperty<TSourcePropertyType>(Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, object> propertyResultFunc)
+        public Map<TSource, TResult> MapProperty<TSourcePropertyType>(Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, object> propertyResultFunc)
         {
             if (sourceExpression.Body is MemberExpression sourceMemberExpression)
             {
                 var key = (sourceMemberExpression.Member.Name, typeof(TSourcePropertyType));
                 propertyMapFuncs.Add(key, new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue)));
             }
+            return this;
         }
     }
-}//sourceExpression.Compile().Invoke((TSourcePropertyType)sourceValue))
+}
