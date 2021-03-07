@@ -1,43 +1,99 @@
 ﻿using ImmutaMap.Interfaces;
+using ImmutaMap.Utilities;
+using Specky.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace ImmutaMap
 {
-    public class Mapper : IMapper
+    [Speck]
+    public class Mapper
     {
-        private readonly IDictionary<Type, Func<Attribute, object, object>> attributeFunctions = new Dictionary<Type, Func<Attribute, object, object>>();
-        private readonly IDictionary<string, Func<object, object>> sourcePropertyFunctions = new Dictionary<string, Func<object, object>>();
-        private readonly IDictionary<string, Func<object>> sourcePropertyFunctions2 = new Dictionary<string, Func<object>>();
-        private readonly IList<PropertyMap> maps = new List<PropertyMap>();
+        private readonly ITypeFormatter typeFormatter;
 
-        public IEnumerable<PropertyMap> Maps => maps;
-        public IDictionary<Type, Func<Attribute, object, object>> AttributeFunctions => attributeFunctions;
-        public IDictionary<string, Func<object, object>> SourcePropertyFunctions => sourcePropertyFunctions;
-        public IDictionary<string, Func<object>> SourcePropertyFunctions2 => sourcePropertyFunctions2;
-
-        public Mapper MapProperty(string sourcePropertyName, string resultPropertyName)
+        public Mapper(ITypeFormatter typeFormatter)
         {
-            maps.Add(new PropertyMap { SourcePropertyName = sourcePropertyName, ResultPropertyName = resultPropertyName });
-            return this;
+            this.typeFormatter = typeFormatter;
         }
 
-        public Mapper WithAttribute<T>(Func<T, object, object> func) where T : Attribute
+        public static Mapper GetNewInstance() => new Mapper(new TypeFormatter());
+        public Map<TSource, TResult> Map<TSource, TResult>(TSource source) => new Map<TSource, TResult>(source);
+
+        public TResult Build<TSource, TResult>(Map<TSource, TResult> map, Func<object[]> args = null)
         {
-            attributeFunctions.Add(typeof(T), new Func<Attribute, object, object>((attribute, target) => func.Invoke((T)attribute, target)));
-            return this;
+            TResult result;
+            result = typeFormatter.GetInstance<TResult>(args);
+
+            Copy(map, result);
+
+            return result;
         }
 
-        public Mapper WithSourceProperty(string propertyName, Func<object, object> func)
+        private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TTarget target)
         {
-            sourcePropertyFunctions.Add(propertyName, new Func<object, object>((value) => func.Invoke(value)));
-            return this;
+            var sourcePropertyInfos = typeof(TSource).GetProperties().ToList();
+            var targetPropertyInfos = typeof(TTarget).GetProperties().ToList();
+
+            var joinedPropertyInfos = GetSourceResultPropeties(sourcePropertyInfos, targetPropertyInfos);
+            AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
+
+            foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
+            {
+                var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
+                if (map.PropertyMapFuncs.Keys.Contains(propertyMapFuncsKey))
+                {
+                    var func = map.PropertyMapFuncs[propertyMapFuncsKey];
+                    var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
+                    SetTargetValue(target, targetPropertyInfo, targetValue);
+                }
+                else
+                {
+                    var targetValue = sourcePropertyInfo.GetValue(map.Source);
+                    SetTargetValue(target, targetPropertyInfo, targetValue);
+                }
+            }
         }
 
-        public Mapper WithSourceProperty(string propertyName, Func<object> func)
+        private static void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
         {
-            sourcePropertyFunctions2.Add(propertyName, new Func<object>(() => func.Invoke()));
-            return this;
+            if (targetPropertyInfo.CanWrite)
+            {
+                targetPropertyInfo.SetValue(target, targetValue);
+            }
+            else
+            {
+                var fields = typeof(TTarget).GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
+
+                if (backingField != null)
+                {
+                    backingField.SetValue(target, targetValue);
+                }
+            }
+        }
+
+        private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
+        {
+            foreach (var (sourcePropertyName, resultPropertyName) in map.PropertyNameMaps)
+            {
+                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => x.Name == sourcePropertyName);
+                if (sourcePropertyInfo == null) continue;
+                var resultPropertyInfo = resultProperties.FirstOrDefault(x => x.Name == resultPropertyName);
+                if (resultPropertyInfo == null) continue;
+                if (joinedPropertyInfos.Any(x => x.sourcePropertyInfo.Name == sourcePropertyName && x.resultPropertyInfo.Name == resultPropertyName)) continue;
+                joinedPropertyInfos.Add((sourcePropertyInfo, resultPropertyInfo));
+            }
+        }
+
+        private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultPropeties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties)
+        {
+            return sourceProperties.Join(resultProperties,
+                sourceProperty => sourceProperty.Name,
+                resultProperty => resultProperty.Name,
+                (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
+                .ToList();
         }
     }
 }

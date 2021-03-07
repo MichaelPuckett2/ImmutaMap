@@ -1,8 +1,12 @@
-﻿namespace ImmutaMap
+﻿using System;
+using System.Reflection;
+
+namespace ImmutaMap
 {
     public class PropertyMap
     {
-        public string SourcePropertyName { get; set; }
-        public string ResultPropertyName { get; set; }
+        public PropertyInfo SourcePropertyInfo { get; }
+        public PropertyInfo ResultPropertyInfo { get; }
+        public Func<PropertyInfo, PropertyInfo, object> Map { get; }
     }
 }
