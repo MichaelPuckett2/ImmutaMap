@@ -1,5 +1,4 @@
 ﻿using ImmutaMap.Interfaces;
-using Specky.Attributes;
 using System;
 using System.Runtime.Serialization;
 
@@ -8,7 +7,6 @@ namespace ImmutaMap.Utilities
     /// <summary>
     /// Can get an instance of T using the default empty constructor
     /// </summary>
-    [Speck]
     public class TypeFormatter : ITypeFormatter
     {
         public T GetInstance<T>(Func<object[]> args = null)

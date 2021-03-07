@@ -1,6 +1,5 @@
 ﻿using ImmutaMap.Interfaces;
 using ImmutaMap.Utilities;
-using Specky.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,6 @@ using System.Reflection;
 
 namespace ImmutaMap
 {
-    [Speck]
     public class Mapper
     {
         private readonly ITypeFormatter typeFormatter;
