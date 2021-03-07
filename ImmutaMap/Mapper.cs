@@ -21,7 +21,6 @@ namespace ImmutaMap
         }
 
         public static Mapper GetNewInstance() => new Mapper(new TypeFormatter());
-
         public Map<TSource, TResult> Map<TSource, TResult>(TSource source) => new Map<TSource, TResult>(source);
 
         public TResult Build<TSource, TResult>(Map<TSource, TResult> map, Func<object[]> args = null)
@@ -50,29 +49,6 @@ namespace ImmutaMap
                     var func = map.PropertyMapFuncs[propertyMapFuncsKey];
                     var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
                     SetTargetValue(target, targetPropertyInfo, targetValue);
-                }
-                else if (sourcePropertyInfo.PropertyType != typeof(string)
-                && typeof(IEnumerable).IsAssignableFrom(sourcePropertyInfo.PropertyType)
-                && typeof(IEnumerable).IsAssignableFrom(targetPropertyInfo.PropertyType))
-                {
-                    if (sourcePropertyInfo.PropertyType != targetPropertyInfo.PropertyType)
-                    {
-                        throw new EnumerableTypeMismatchException(sourcePropertyInfo.PropertyType, targetPropertyInfo.PropertyType);
-                    }
-
-                    //var sourceGenericType = sourcePropertyInfo.PropertyType.GenericTypeArguments.FirstOrDefault();
-
-                    //if (sourceGenericType != null)
-                    //{
-                    //    var genericList = typeof(List<>);
-                    //    var resultListOfType = genericList.MakeGenericType(sourceGenericType);
-                    //    var resultList = (IList)Activator.CreateInstance(resultListOfType);
-                    //    foreach (var sourceValue in (IEnumerable)sourcePropertyInfo.GetValue(map.Source))
-                    //    {
-                    //        resultList.Add(new Mapper(new TypeFormatter()).Map(sourceValue).Build()); //TODO: This needs to be Mapped also.
-                    //    }
-                    //    resultPropertyInfo.SetValue(result, resultList);
-                    //}
                 }
                 else
                 {
