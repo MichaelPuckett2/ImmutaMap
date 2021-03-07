@@ -37,5 +37,12 @@ namespace ImmutaMap
             }
             return this;
         }
+
+        public Map<TSource, TResult> MapDynamicProperty(Type type, string propertyName, Func<object> propertyResultFunc)
+        {
+            var key = (propertyName, type);
+            propertyMapFuncs.Add(key, new Func<object, object>(sourceValue => propertyResultFunc.Invoke()));
+            return this;
+        }
     }
 }

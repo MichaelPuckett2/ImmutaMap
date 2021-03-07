@@ -1,9 +1,7 @@
-﻿using ImmutaMap.Exceptions;
-using ImmutaMap.Interfaces;
+﻿using ImmutaMap.Interfaces;
 using ImmutaMap.Utilities;
 using Specky.Attributes;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
