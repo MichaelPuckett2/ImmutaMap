@@ -1,4 +1,5 @@
-﻿using ImmutaMap.Interfaces;
+﻿using ImmutaMap.Exceptions;
+using ImmutaMap.Interfaces;
 using ImmutaMap.Utilities;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,6 @@ namespace ImmutaMap
         }
 
         public static Mapper GetNewInstance() => new Mapper(new TypeFormatter());
-        public Map<TSource, TResult> Map<TSource, TResult>(TSource source) => new Map<TSource, TResult>(source);
 
         public TResult Build<TSource, TResult>(Map<TSource, TResult> map, Func<object[]> args = null)
         {
@@ -44,6 +44,10 @@ namespace ImmutaMap
                 {
                     var func = map.PropertyMapFuncs[propertyMapFuncsKey];
                     var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
+                    if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
+                    {
+                        throw new MappedPropertyException(typeof(TSource), targetPropertyInfo.PropertyType, targetValue.GetType());
+                    }
                     SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
                 else

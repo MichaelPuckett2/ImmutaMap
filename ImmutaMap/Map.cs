@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace ImmutaMap
 {
@@ -20,23 +19,24 @@ namespace ImmutaMap
 
         public TSource Source { get; }
 
-        public Map<TSource, TResult> MapPropertyName(Expression<Func<TSource, object>> sourceExpression, Expression<Func<TResult, object>> resultExpression)
+        public void MapPropertyName(string sourcePropertyName, string targetPropertyName)
         {
-            if (sourceExpression.Body is MemberExpression sourceMemberExpression
-            && resultExpression.Body is MemberExpression resultMemberExpression)
-                propertyNameMaps.Add((sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name));
-            return this;
+            propertyNameMaps.Add((sourcePropertyName, targetPropertyName));
         }
 
-        public Map<TSource, TResult> MapProperty<TSourcePropertyType>(Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, object> propertyResultFunc)
+        public void MapProperty<TSourcePropertyType>(string name, Func<TSourcePropertyType, object> propertyResultFunc)
         {
-            if (sourceExpression.Body is MemberExpression sourceMemberExpression)
-            {
-                var key = (sourceMemberExpression.Member.Name, typeof(TSourcePropertyType));
-                propertyMapFuncs.Add(key, new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue)));
-            }
-            return this;
+            var key = (name, typeof(TSourcePropertyType));
+            propertyMapFuncs.Add(key, new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue)));
         }
+
+        //public void MapProperty<TSource, TResult, TSourcePropertyType>(this Map<TSource, TResult> map, Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, object> propertyResultFunc)
+        //{
+        //    if (sourceExpression.Body is MemberExpression sourceMemberExpression)
+        //    {
+        //        map.MapProperty(sourceMemberExpression.Member.Name, propertyResultFunc);
+        //    }
+        //}
 
         public Map<TSource, TResult> MapDynamicProperty(Type type, string propertyName, Func<object> propertyResultFunc)
         {
