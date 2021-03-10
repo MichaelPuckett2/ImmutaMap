@@ -6,7 +6,7 @@ namespace ImmutaMap
 {
     public static class Extensions
     {
-        public static Map<TSource, TTarget> MakeMap<TSource, TTarget>(this TSource tSource)
+        public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource tSource)
         {
             return new Map<TSource, TTarget>(tSource);
         }
@@ -17,7 +17,7 @@ namespace ImmutaMap
             return map;
         }
 
-        public static Map<T, TSourceProperty> Map<T, TSourceProperty>(this Map<T, TSourceProperty> map, dynamic a)
+        public static Map<T, TSourceProperty> MapAnonymous<T, TSourceProperty>(this Map<T, TSourceProperty> map, dynamic a)
         {
             var properties = new List<(string Name, object Value)>();
             foreach (var prop in a.GetType().GetProperties())
