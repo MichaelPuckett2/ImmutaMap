@@ -62,7 +62,7 @@ This also follows a similar pattern used with records in .NET 5.0 / C# 9.0, whic
 
     var twinBrother = person.With(new { FirstName = "John" }); 
    
-#Known Issues:
+# Known Issues:
 At this time mapping is not recursive.  If you have a nested type and the mapping of that type is required, then the mapping will be manually written down the chain or conquered prior to the mapping logic in then placed inline.
 
 Example:
