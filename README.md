@@ -62,3 +62,32 @@ This also follows a similar pattern used with records in .NET 5.0 / C# 9.0, whic
 
     var twinBrother = person.With(new { FirstName = "John" }); 
    
+#Known Issues:
+At this time mapping is not recursive.  If you have a nested type and the mapping of that type is required, then the mapping will be manually written down the chain or conquered prior to the mapping logic in then placed inline.
+
+Example:
+
+    public class PersonA
+    {
+        //firstname, lastname etc...
+        
+        //In this case, since FamilyMembers is enumeration of Person and each famkily member can also have FamilyMembers.
+        //Recusively mapping the members is not yet supported if you are mapping from PersonA to PersonB where one is IEnumerable and the other is ICollection.
+        public IEnumerable<PersonA> FamilyMembers { get; }
+    }
+    
+    
+    public class PersonB
+    {
+        //firstname, lastname etc...
+        
+        public ICollection<PersonB> FamilyMembers { get; }
+    }
+    
+    //......
+    
+    //Note that, as of now, the MapProperty only goes one deep if each family member requires distinct mapping.
+    var personB = personA
+        .Map<PersonA, PersonB>()
+        .MapProperty(source => source.FamilyMembers, familyMembers => familyMembers.ToList())
+        .Build();
