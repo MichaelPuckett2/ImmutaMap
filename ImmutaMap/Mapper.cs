@@ -12,21 +12,35 @@ namespace ImmutaMap
     {
         private readonly ITypeFormatter typeFormatter;
 
+        /// <summary>
+        /// Initializes the Mapper with an ITypeFormatter.
+        /// </summary>
+        /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
         public Mapper(ITypeFormatter typeFormatter)
         {
             this.typeFormatter = typeFormatter;
         }
 
-        public static Mapper GetNewInstance() => new Mapper(new TypeFormatter());
+        /// <summary>
+        /// A simpler instantiation that allows for quick fluent designing.
+        /// </summary>
+        /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
+        /// <returns>A new Mapper used to map and instantiate the maps target.</returns>
+        public static Mapper GetNewInstance(ITypeFormatter typeFormatter = null) => new Mapper(typeFormatter ?? new TypeFormatter());
 
-        public TResult Build<TSource, TResult>(Map<TSource, TResult> map, Func<object[]> args = null)
+        /// <summary>
+        /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
+        /// </summary>
+        /// <typeparam name="TSource">The source type mapped from.</typeparam>
+        /// <typeparam name="TTarget">The target type mapped to.</typeparam>
+        /// <param name="map">The Map used to build.</param>
+        /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
+        /// <returns>An instance of the target type with values mapped from the source instance.</returns>
+        public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, Func<object[]> args = null)
         {
-            TResult result;
-            result = typeFormatter.GetInstance<TResult>(args);
-
-            Copy(map, result);
-
-            return result;
+            var target = typeFormatter.GetInstance<TTarget>(args);
+            Copy(map, target);
+            return target;
         }
 
         private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TTarget target)
@@ -52,7 +66,17 @@ namespace ImmutaMap
                 }
                 else
                 {
-                    var targetValue = sourcePropertyInfo.GetValue(map.Source);
+                    object targetValue;
+                    if (typeof(TSource) != typeof(TTarget)
+                    && sourcePropertyInfo.PropertyType == typeof(TSource)
+                    && targetPropertyInfo.PropertyType == typeof(TTarget))
+                    {
+                        targetValue = GetNewInstance().Build(map);
+                    }
+                    else
+                    {
+                        targetValue = sourcePropertyInfo.GetValue(map.Source);
+                    }
                     SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
             }
