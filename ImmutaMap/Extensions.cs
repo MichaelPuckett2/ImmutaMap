@@ -1,4 +1,6 @@
-﻿using ImmutaMap.Mappings;
+﻿using ImmutaMap.Exceptions;
+using ImmutaMap.Interfaces;
+using ImmutaMap.Mappings;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -92,8 +94,8 @@ namespace ImmutaMap
         /// <param name="propertyResultFunc">The function used to get the target property value. Invoked on Build()</param>
         /// <returns>The Map this method workds against.</returns>
         public static Map<TSource, TTarget> MapProperty<TSource, TTarget, TSourcePropertyType>(
-            this Map<TSource, TTarget> map, 
-            Expression<Func<TSource, TSourcePropertyType>> sourceExpression, 
+            this Map<TSource, TTarget> map,
+            Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
             Func<TSourcePropertyType, object> propertyResultFunc)
         {
             if (sourceExpression.Body is MemberExpression sourceMemberExpression)
@@ -132,6 +134,21 @@ namespace ImmutaMap
         {
             var att = new TargetAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
             map.AddMapping(att);
+            return map;
+        }
+
+        /// <summary>
+        /// Adds a custom map.
+        /// </summary>
+        /// <typeparam name="TSource">The source type.</typeparam>
+        /// <typeparam name="TTarget">The target type.</typeparam>
+        /// <param name="map">The map this method works against.</param>
+        /// <param name="mapping">The custom mapping added.</param>
+        /// <returns>The map this method works against.</returns>
+        public static Map<TSource, TTarget> MapCustom<TSource, TTarget>(this Map<TSource, TTarget> map, IMapping mapping)
+        {
+            if (mapping == null) throw new MappingNullException();
+            map.AddMapping(mapping);
             return map;
         }
 
