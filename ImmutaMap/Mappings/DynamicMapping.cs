@@ -17,11 +17,11 @@ namespace ImmutaMap.Mappings
             this.type = type;
         }
 
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
         {
             if (key == (sourcePropertyInfo.Name, type))
             {
-                result = func.Invoke(sourcePropertyInfo.GetValue(source));
+                result = func.Invoke(previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
                 return true;
             }
             else

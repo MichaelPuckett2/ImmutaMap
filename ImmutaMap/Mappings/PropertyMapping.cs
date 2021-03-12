@@ -16,12 +16,12 @@ namespace ImmutaMap.Mappings
             func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue));
         }
 
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue,  out object result)
         {
             var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
             if (key == propertyMapFuncsKey)
             {
-                var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(source));
+                var targetValue = func?.Invoke(previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
                 if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
                 {
                     throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());

@@ -11,6 +11,7 @@ namespace ImmutaMap
     public class MapBuilder
     {
         private readonly ITypeFormatter typeFormatter;
+        private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
 
         /// <summary>
         /// Initializes the Mapper with an ITypeFormatter.
@@ -70,34 +71,51 @@ namespace ImmutaMap
 
             foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
             {
+
                 var mappingFound = false;
                 foreach (var mapping in map.Mappings)
                 {
-                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
+                    var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
+                        ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
+                        : default;
+
+                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, previouslyMappedValue, out object result))
                     {
+                        mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
                         SetTargetValue(target, targetPropertyInfo, result);
                         mappingFound = true;
                     }
                 }
                 if (!mappingFound)
                 {
-                    object targetValue;
-                    if (typeof(TSource) != typeof(TTarget)
-                    && sourcePropertyInfo.PropertyType == typeof(TSource)
-                    && targetPropertyInfo.PropertyType == typeof(TTarget))
+                    var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
+                        ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
+                        : default;
+
+                    if (previouslyMappedValue != default)
                     {
-                        targetValue = GetNewInstance().Build(map, source);
+                        SetTargetValue(target, targetPropertyInfo, previouslyMappedValue);
                     }
                     else
                     {
-                        targetValue = sourcePropertyInfo.GetValue(source);
+                        object targetValue;
+                        if (typeof(TSource) != typeof(TTarget)
+                        && sourcePropertyInfo.PropertyType == typeof(TSource)
+                        && targetPropertyInfo.PropertyType == typeof(TTarget))
+                        {
+                            targetValue = GetNewInstance().Build(map, source);
+                        }
+                        else
+                        {
+                            targetValue = sourcePropertyInfo.GetValue(source);
+                        }
+                        SetTargetValue(target, targetPropertyInfo, targetValue);
                     }
-                    SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
             }
         }
 
-        private static void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
+        private void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
         {
             if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
@@ -118,8 +136,9 @@ namespace ImmutaMap
                     backingField.SetValue(target, targetValue);
                 }
             }
-        }
 
+            mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue;
+        }
         private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
         {
             foreach (var (sourcePropertyName, resultPropertyName) in map.PropertyNameMaps)

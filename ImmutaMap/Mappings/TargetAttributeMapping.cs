@@ -13,12 +13,12 @@ namespace ImmutaMap.Mappings
             this.func = func;
         }
 
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
         {
             var attribute = targetPropertyInfo.GetCustomAttribute<TAttribute>();
             if (attribute != null)
             {
-                result = func.Invoke(attribute, sourcePropertyInfo.GetValue(source));
+                result = func.Invoke(attribute, previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
                 return true;
             }
             else
