@@ -103,6 +103,15 @@ namespace ImmutaMap
             return map;
         }
 
+        /// <summary>
+        /// Maps the source properties, containing the given attribute, in a defined way.
+        /// </summary>
+        /// <typeparam name="TSource">The source type.</typeparam>
+        /// <typeparam name="TTarget">The target type.</typeparam>
+        /// <typeparam name="TAttribute">The attribute type.</typeparam>
+        /// <param name="map">The map used in this method.</param>
+        /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
+        /// <returns>The map thsi method works against.</returns>
         public static Map<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
         {
             var att = new SourceAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
@@ -110,6 +119,15 @@ namespace ImmutaMap
             return map;
         }
 
+        /// <summary>
+        /// Maps the target properties, containing the given attribute, in a defined way.
+        /// </summary>
+        /// <typeparam name="TSource">The source type.</typeparam>
+        /// <typeparam name="TTarget">The target type.</typeparam>
+        /// <typeparam name="TAttribute">The attribute type.</typeparam>
+        /// <param name="map">The map used in this method.</param>
+        /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
+        /// <returns>The map thsi method works against.</returns>
         public static Map<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
         {
             var att = new TargetAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
