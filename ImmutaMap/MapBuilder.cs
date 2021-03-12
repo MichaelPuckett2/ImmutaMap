@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace ImmutaMap
 {
-    public class Mapper
+    public class MapBuilder
     {
         private readonly ITypeFormatter typeFormatter;
 
@@ -16,7 +16,7 @@ namespace ImmutaMap
         /// Initializes the Mapper with an ITypeFormatter.
         /// </summary>
         /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
-        public Mapper(ITypeFormatter typeFormatter)
+        public MapBuilder(ITypeFormatter typeFormatter)
         {
             this.typeFormatter = typeFormatter;
         }
@@ -26,7 +26,7 @@ namespace ImmutaMap
         /// </summary>
         /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
         /// <returns>A new Mapper used to map and instantiate the maps target.</returns>
-        public static Mapper GetNewInstance(ITypeFormatter typeFormatter = null) => new Mapper(typeFormatter ?? new TypeFormatter());
+        public static MapBuilder GetNewInstance(ITypeFormatter typeFormatter = null) => new MapBuilder(typeFormatter ?? new TypeFormatter());
 
         /// <summary>
         /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
@@ -38,44 +38,59 @@ namespace ImmutaMap
         /// <returns>An instance of the target type with values mapped from the source instance.</returns>
         public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, Func<object[]> args = null)
         {
+            if (map.Source == null) throw new SourceNullException(typeof(TSource));
             var target = typeFormatter.GetInstance<TTarget>(args);
-            Copy(map, target);
+            Copy(map, map.Source, target);
             return target;
         }
 
-        private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TTarget target)
+        /// <summary>
+        /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
+        /// </summary>
+        /// <typeparam name="TSource">The source type mapped from.</typeparam>
+        /// <typeparam name="TTarget">The target type mapped to.</typeparam>
+        /// <param name="map">The Map used to build.</param>
+        /// <param name="source">The source used during the mapping.</param>
+        /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
+        /// <returns>An instance of the target type with values mapped from the source instance.</returns>
+        public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, Func<object[]> args = null)
+        {
+            if (source == null) throw new SourceNullException(typeof(TSource));
+            var target = typeFormatter.GetInstance<TTarget>(args);
+            Copy(map, source, target);
+            return target;
+        }
+
+        private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, TTarget target)
         {
             var sourcePropertyInfos = typeof(TSource).GetProperties().ToList();
             var targetPropertyInfos = typeof(TTarget).GetProperties().ToList();
-
             var joinedPropertyInfos = GetSourceResultPropeties(sourcePropertyInfos, targetPropertyInfos);
             AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 
             foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
             {
-                var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
-                if (map.PropertyMapFuncs.Keys.Contains(propertyMapFuncsKey))
+                var mappingFound = false;
+                foreach (var mapping in map.Mappings)
                 {
-                    var func = map.PropertyMapFuncs[propertyMapFuncsKey];
-                    var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(map.Source));
-                    if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
+                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
                     {
-                        throw new MappedPropertyException(typeof(TSource), targetPropertyInfo.PropertyType, targetValue.GetType());
+                        SetTargetValue(target, targetPropertyInfo, result);
+                        mappingFound = true;
                     }
-                    SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
-                else
+                if (!mappingFound)
                 {
                     object targetValue;
                     if (typeof(TSource) != typeof(TTarget)
                     && sourcePropertyInfo.PropertyType == typeof(TSource)
                     && targetPropertyInfo.PropertyType == typeof(TTarget))
                     {
-                        targetValue = GetNewInstance().Build(map);
+                        targetValue = GetNewInstance().Build(map, source);
                     }
                     else
                     {
-                        targetValue = sourcePropertyInfo.GetValue(map.Source);
+                        targetValue = sourcePropertyInfo.GetValue(source);
                     }
                     SetTargetValue(target, targetPropertyInfo, targetValue);
                 }
@@ -84,6 +99,11 @@ namespace ImmutaMap
 
         private static void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
         {
+            if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
+            {
+                throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());
+            }
+
             if (targetPropertyInfo.CanWrite)
             {
                 targetPropertyInfo.SetValue(target, targetValue);

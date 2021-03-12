@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImmutaMap.Mappings;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -14,9 +15,9 @@ namespace ImmutaMap
         /// <typeparam name="TTarget">Type being mapped to.</typeparam>
         /// <param name="tSource">The source values used during the build process after mapping.</param>
         /// <returns>returns a Map that can be modified, stored, or built for a result.</returns>
-        public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource tSource)
+        public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source)
         {
-            return new Map<TSource, TTarget>(tSource);
+            return new Map<TSource, TTarget>(source);
         }
 
         /// <summary>
@@ -38,7 +39,7 @@ namespace ImmutaMap
                 if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
             }
 
-            foreach (var (Name, Value) in properties) map.MapDynamicProperty(Value.GetType(), Name, () => Value);
+            foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return map;
         }
 
@@ -75,7 +76,7 @@ namespace ImmutaMap
             if (sourceExpression.Body is MemberExpression sourceMemberExpression
             && targetExpression.Body is MemberExpression resultMemberExpression)
             {
-                map.MapPropertyName(sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name);
+                map.AddPropertyNameMapping(sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name);
             }
             return map;
         }
@@ -97,8 +98,22 @@ namespace ImmutaMap
         {
             if (sourceExpression.Body is MemberExpression sourceMemberExpression)
             {
-                map.MapProperty(sourceMemberExpression.Member.Name, propertyResultFunc);
+                map.AddMapping(new PropertyMapping<TSourcePropertyType>(sourceMemberExpression.Member.Name, propertyResultFunc));
             }
+            return map;
+        }
+
+        public static Map<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
+        {
+            var att = new SourceAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
+            map.AddMapping(att);
+            return map;
+        }
+
+        public static Map<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
+        {
+            var att = new TargetAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
+            map.AddMapping(att);
             return map;
         }
 
@@ -111,7 +126,7 @@ namespace ImmutaMap
         /// <returns>The result of the mapping as an instantiated TTarget Type.</returns>
         public static TTarget Build<TSource, TTarget>(this Map<TSource, TTarget> map)
         {
-            return Mapper.GetNewInstance().Build(map);
+            return MapBuilder.GetNewInstance().Build(map, map.Source);
         }
 
         /// <summary>
@@ -130,9 +145,9 @@ namespace ImmutaMap
                 if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
             }
 
-            var map = new Map<T, T>(t);
-            foreach (var (Name, Value) in properties) map.MapDynamicProperty(Value.GetType(), Name, () => Value);
-            return Mapper.GetNewInstance().Build(map);
+            var map = new Map<T, T>();
+            foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+            return MapBuilder.GetNewInstance().Build(map, t);
         }
     }
 }
