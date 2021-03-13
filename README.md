@@ -60,10 +60,6 @@ A mapping can also be stored for usage later and used like so.
     //later we can then build our map at anytime
     var b = bMapping.Build();
 
-## Recursive mapping is not yet available
-There are times when you want to make a map of a source type to a target type and then apply that same map to all available types.  
-At this time that code is not in place but it's coming.
-
 ## Defining logic for properties with specific attributes
 If you want to map against a specific attribute you can do so by adding the mapping for one. In this case we have a TrimAttribute on some of our source properties and during the build process we trim the strings that have that attribute applied to the source property. There is also a MapTargetAttribute extension.
 
