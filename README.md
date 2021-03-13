@@ -1,5 +1,5 @@
 # ImmutaMap
-A type mapper with the ability to also map immutable types in a clean, readable, and maintainable pattern. Employee is immutable in this case. Previous to records in .NET 5 (C# 9) to make a true immutable type meant it was very hard to copy or work with the values.
+A type mapper with the ability to also map immutable types in a clean, readable, and maintainable pattern. Previous to records in .NET 5 (C# 9) to make a true immutable type meant it was very hard to copy or work with the values.
 As a result developers and architects would often skip steps writing the proper converters or mappings because the work was extensive and instead rely on non immutable types.
 Immutamap uses reflection to copy immutable types into new types with specific mappings.  The default mapping is a property name to property name mapping with the values as is.
 
