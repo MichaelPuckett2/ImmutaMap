@@ -102,9 +102,9 @@ Here's a UpperCase() custom mapping type and how it looks.
 
 Now we can automatically uppercase all strings during the mapping by applying this custom UpperCaseMap() to our mapping chain.
 
-            var typeB = typeA
-                .MapCustom(new UpperCaseMap())
-                .Build();
+    var typeB = typeA
+        .MapCustom(new UpperCaseMap())
+        .Build();
    
 # Known Issues:
 At this time mapping is not recursive.  If you have a nested type and the mapping of that type is required, then the mapping will be manually written down the chain or conquered prior to the mapping logic in then placed inline.
