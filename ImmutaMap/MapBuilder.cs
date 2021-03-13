@@ -38,12 +38,7 @@ namespace ImmutaMap
         /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
         /// <returns>An instance of the target type with values mapped from the source instance.</returns>
         public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, Func<object[]> args = null)
-        {
-            if (map.Source == null) throw new SourceNullException(typeof(TSource));
-            var target = typeFormatter.GetInstance<TTarget>(args);
-            Copy(map, map.Source, target);
-            return target;
-        }
+            => Build(map, map.Source, args);
 
         /// <summary>
         /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
