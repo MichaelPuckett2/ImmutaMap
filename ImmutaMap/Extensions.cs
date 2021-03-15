@@ -43,23 +43,7 @@ namespace ImmutaMap
 
             foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return map;
-        }
-
-        /// <summary>
-        /// Maps a type to itself where an expression binding the property to a map and another function is used to perform the mapping logic.
-        /// </summary>
-        /// <typeparam name="T">The source type being mapped.</typeparam>
-        /// <typeparam name="TSourcePropertyType">The source property type being mapped.</typeparam>
-        /// <param name="t">The source object this method sets the mapping against.</param>
-        /// <param name="sourceExpression">The expression used to get teh source property.</param>
-        /// <param name="valueFunc">The function used to get the target value from the source property.</param>
-        /// <returns></returns>
-        public static Map<T, T> MapSelf<T, TSourcePropertyType>(this T t, Expression<Func<T, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
-        {
-            var map = new Map<T, T>(t);
-            map.MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t)));
-            return map;
-        }
+        }      
 
         /// <summary>
         /// Maps the name of the source property to the name of the target property.  Example: TypeA.FirstName can map to TypeB.First_Name
@@ -153,6 +137,22 @@ namespace ImmutaMap
         }
 
         /// <summary>
+        /// Maps a type from source property.
+        /// </summary>
+        /// <typeparam name="TSource">The source type being mapped.</typeparam>
+        /// <typeparam name="TTarget">The target type being mapped.</typeparam>
+        /// <typeparam name="TType">The source property type being mapped.</typeparam>
+        /// <param name="map">The map this method works against.</param>
+        /// <param name="typeMapFunc">The function used to get the result value.</param>
+        /// <returns>The map this method works against.</returns>
+        public static Map<TSource, TTarget> MapType<TSource, TTarget, TType>(this Map<TSource, TTarget> map, Func<object, object> typeMapFunc)
+        {
+            var typeMapping = new SourceTypeMapping(typeof(TType), typeMapFunc);
+            map.AddMapping(typeMapping);
+            return map;
+        }
+
+        /// <summary>
         /// Builds the Map, invoking all mappings added.  Takes the source values and places them in the targets values.
         /// </summary>
         /// <typeparam name="TSource">The source type built from.</typeparam>
@@ -188,6 +188,20 @@ namespace ImmutaMap
         public static TTarget With<TSource, TTarget>(this TSource source, Map<TSource, TTarget> map)
         {
             return MapBuilder.GetNewInstance().Build(map, source);
+        }
+
+        /// <summary>
+        /// Maps a type to itself where an expression binding the property to a map and another function is used to perform the mapping logic.
+        /// </summary>
+        /// <typeparam name="T">The source type being mapped.</typeparam>
+        /// <typeparam name="TSourcePropertyType">The source property type being mapped.</typeparam>
+        /// <param name="t">The source object this method sets the mapping against.</param>
+        /// <param name="sourceExpression">The expression used to get teh source property.</param>
+        /// <param name="valueFunc">The function used to get the target value from the source property.</param>
+        /// <returns></returns>
+        public static T With<T, TSourcePropertyType>(this T t, Expression<Func<T, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
+        {
+            return t.Map<T, T>().MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
         }
     }
 }

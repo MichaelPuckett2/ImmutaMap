@@ -66,7 +66,6 @@ namespace ImmutaMap
 
             foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
             {
-
                 var mappingFound = false;
                 foreach (var mapping in map.Mappings)
                 {
