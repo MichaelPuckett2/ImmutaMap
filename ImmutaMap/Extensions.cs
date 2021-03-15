@@ -184,5 +184,10 @@ namespace ImmutaMap
             foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return MapBuilder.GetNewInstance().Build(map, t);
         }
+
+        public static TTarget With<TSource, TTarget>(this TSource source, Map<TSource, TTarget> map)
+        {
+            return MapBuilder.GetNewInstance().Build(map, source);
+        }
     }
 }
