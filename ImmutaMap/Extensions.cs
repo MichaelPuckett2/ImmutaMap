@@ -203,5 +203,16 @@ namespace ImmutaMap
         {
             return t.Map<T, T>().MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
         }
+
+        /// <summary>
+        /// For simple one to one mappings from type to type.
+        /// </summary>
+        /// <typeparam name="T">The type to map to.</typeparam>
+        /// <param name="obj">The obejct this method works against.</param>
+        /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
+        public static T As<T>(this object obj)
+        {
+            return MapBuilder.GetNewInstance().Build(new Map<object, T>(), obj);
+        }
     }
 }

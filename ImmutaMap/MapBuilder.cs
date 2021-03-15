@@ -59,7 +59,7 @@ namespace ImmutaMap
 
         private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, TTarget target)
         {
-            var sourcePropertyInfos = typeof(TSource).GetProperties().ToList();
+            var sourcePropertyInfos = source.GetType().GetProperties().ToList();
             var targetPropertyInfos = typeof(TTarget).GetProperties().ToList();
             var joinedPropertyInfos = GetSourceResultPropeties(sourcePropertyInfos, targetPropertyInfos);
             AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
