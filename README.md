@@ -60,10 +60,6 @@ A mapping can also be stored for usage later and used like so.
     //later we can then build our map at anytime
     var b = bMapping.Build();
 
-## Recursive mapping is not yet available
-There are times when you want to make a map of a source type to a target type and then apply that same map to all available types.  
-At this time that code is not in place but it's coming.
-
 ## Defining logic for properties with specific attributes
 If you want to map against a specific attribute you can do so by adding the mapping for one. In this case we have a TrimAttribute on some of our source properties and during the build process we trim the strings that have that attribute applied to the source property. There is also a MapTargetAttribute extension.
 
@@ -106,9 +102,9 @@ Here's a UpperCase() custom mapping type and how it looks.
 
 Now we can automatically uppercase all strings during the mapping by applying this custom UpperCaseMap() to our mapping chain.
 
-            var typeB = typeA
-                .MapCustom(new UpperCaseMap())
-                .Build();
+    var typeB = typeA
+        .MapCustom(new UpperCaseMap())
+        .Build();
    
 # Known Issues:
 At this time mapping is not recursive.  If you have a nested type and the mapping of that type is required, then the mapping will be manually written down the chain or conquered prior to the mapping logic in then placed inline.
