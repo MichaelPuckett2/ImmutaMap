@@ -24,7 +24,7 @@ You can make a mapping and build to produce the result without any custom mappin
 
     var b = a.Map<ImmutableTypeA, TypeB>().Build();
 
-Alternately you can use the As<> extension that performs the same task but is simpler and easier to code and read.
+Alternatively you can use the As<> extension that performs the same task but is simpler and easier to code and read.
 
     var b = a.As<B>();
 
