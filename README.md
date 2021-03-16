@@ -148,6 +148,6 @@ Example:
 
 # Reference
 
-With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
+    With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
 
-Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
+    Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
