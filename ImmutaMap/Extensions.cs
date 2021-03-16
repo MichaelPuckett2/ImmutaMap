@@ -193,15 +193,15 @@ namespace ImmutaMap
         /// <summary>
         /// Maps a type to itself where an expression binding the property to a map and another function is used to perform the mapping logic.
         /// </summary>
-        /// <typeparam name="T">The source type being mapped.</typeparam>
+        /// <typeparam name="TSource">The source type being mapped.</typeparam>
         /// <typeparam name="TSourcePropertyType">The source property type being mapped.</typeparam>
         /// <param name="t">The source object this method sets the mapping against.</param>
         /// <param name="sourceExpression">The expression used to get teh source property.</param>
         /// <param name="valueFunc">The function used to get the target value from the source property.</param>
         /// <returns></returns>
-        public static T With<T, TSourcePropertyType>(this T t, Expression<Func<T, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
+        public static TSource With<TSource, TSourcePropertyType>(this TSource t, Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
         {
-            return t.Map<T, T>().MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
+            return t.Map<TSource, TSource>().MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
         }
 
         /// <summary>

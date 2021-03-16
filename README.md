@@ -20,9 +20,19 @@ This also follows a similar pattern used with records in .NET 5.0 / C# 9.0, whic
 ## Mapping one type to another where property names are the same
 Example:  ImmutableTypeA mapped to TypeB (even non immutable) then ImmutableTypeA.FirstName would automatically map to TypeB.FirstName.
 
-To do so you would write code like this:
+You can make a mapping and build to produce the result without any custom mapping extensions to get a one to one mapping like so:
 
     var b = a.Map<ImmutableTypeA, TypeB>().Build();
+
+Alternately you can use the As<> extension that performs the same task but is simpler and easier to code and read.
+
+    var b = a.As<B>();
+
+You can even continue this mapping with a change to any specific fields on the out bound like so:
+
+    var b = a.As<B>().With(x => x.FirstName, firstName = "John");
+
+However; note that the above step is ok for smaller mappings but not as good as using the Map<TSource, TTarget>().Build() extensions.  When using the Map<TSource, TTarget> extension all mappings are stored and triggered once during the Build operation, producing one result.  The above example using the As<T> extension will actually produce the result and then remap that same result with the With extension.  This internally is 2 operations.  Point being, if you intend to have more than one operation it is recommended to start with the Map<TSource, TTarget> extension.
 
 ## Mapping types with variances in property names
 If TypeB has a different spelling of FirstName, such as First_Name then you could also do this.
@@ -135,3 +145,9 @@ Example:
         .Map<PersonA, PersonB>()
         .MapProperty(source => source.FamilyMembers, familyMembers => familyMembers.ToList())
         .Build();
+
+# Reference
+
+With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
+
+Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
