@@ -77,6 +77,15 @@ If you want to map against a specific attribute you can do so by adding the mapp
         .MapSourceAttribute<PersonDto, Person, TrimAttribute>((attribute, sourceValue) => sourceValue is string str ? str.Trim() : sourceValue)
         .Build();
 
+## Ignoring property name case and exceptions
+By default ImmutaMap uses case sensitive property mapping. If you want to ignore the property casing between types you can set the default parameter when the mapping begins.
+Likewise, ImmutaMap will throw exceptions for types it can't propertly map by default.  You can also ignore these exceptions forcing ImmutaMap to skip these failed properties if you desire.
+Examples:
+
+    var b = a.Map<A, B>(ignoreCase: true, throwExceptions: false).Build();
+
+    var b = a.As<B>(ignoreCase: true, throwExceptions: false);
+
 ## Make a custom mapping
 You can use the MapCustom extension method to add your own custom mapping logic.
 The interface is IMapping and has a single method 
