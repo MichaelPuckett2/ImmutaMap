@@ -15,11 +15,13 @@ namespace ImmutaMap
         /// </summary>
         /// <typeparam name="TSource">Type being mapped from.</typeparam>
         /// <typeparam name="TTarget">Type being mapped to.</typeparam>
-        /// <param name="tSource">The source values used during the build process after mapping.</param>
+        /// <param name="source">The source values used during the build process after mapping.</param>
+        /// <param name="ignoreCase">If true the mapping will ignore case sensitivity. Defaults to false.</param>
+        /// <param name="throwExceptions">If false the mapping will skip mappings that would throw exceptions.  Defaults to true.</param>
         /// <returns>returns a Map that can be modified, stored, or built for a result.</returns>
-        public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source)
+        public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source, bool ignoreCase = false, bool throwExceptions = true)
         {
-            return new Map<TSource, TTarget>(source);
+            return new Map<TSource, TTarget>(source, ignoreCase, throwExceptions);
         }
 
         /// <summary>
@@ -171,7 +173,7 @@ namespace ImmutaMap
         /// <param name="t">The instantiation of the type being mapped from.</param>
         /// <param name="a">The anonymous type used to make the mapping work.</param>
         /// <returns>Instantiated T target value.</returns>
-        public static T With<T>(this T t, dynamic a)
+        public static T With<T>(this T t, dynamic a, bool throwExceptions = true)
         {
             var properties = new List<(string Name, object Value)>();
             foreach (var prop in a.GetType().GetProperties())
@@ -179,8 +181,8 @@ namespace ImmutaMap
                 var foundProp = typeof(T).GetProperty(prop.Name);
                 if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
             }
+            var map = new Map<T, T>(throwExceptions: throwExceptions);
 
-            var map = new Map<T, T>();
             foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return MapBuilder.GetNewInstance().Build(map, t);
         }
@@ -199,9 +201,9 @@ namespace ImmutaMap
         /// <param name="sourceExpression">The expression used to get teh source property.</param>
         /// <param name="valueFunc">The function used to get the target value from the source property.</param>
         /// <returns></returns>
-        public static TSource With<TSource, TSourcePropertyType>(this TSource t, Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
+        public static TSource With<TSource, TSourcePropertyType>(this TSource t, Expression<Func<TSource, TSourcePropertyType>> sourceExpression, Func<TSourcePropertyType, TSourcePropertyType> valueFunc, bool throwExceptions = true)
         {
-            return t.Map<TSource, TSource>().MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
+            return t.Map<TSource, TSource>(throwExceptions: throwExceptions).MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))).Build();
         }
 
         /// <summary>
@@ -210,9 +212,9 @@ namespace ImmutaMap
         /// <typeparam name="T">The type to map to.</typeparam>
         /// <param name="obj">The obejct this method works against.</param>
         /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-        public static T As<T>(this object obj)
+        public static T As<T>(this object obj, bool ignoreCase = false, bool throwExceptions = true)
         {
-            return MapBuilder.GetNewInstance().Build(new Map<object, T>(), obj);
+            return MapBuilder.GetNewInstance().Build(new Map<object, T>(ignoreCase, throwExceptions), obj);
         }
     }
 }

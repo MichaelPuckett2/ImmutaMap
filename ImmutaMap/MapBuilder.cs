@@ -12,6 +12,8 @@ namespace ImmutaMap
     {
         private readonly ITypeFormatter typeFormatter;
         private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
+        private bool isIgnoringCase = false;
+        private bool isThrowingExceptions = true;
 
         /// <summary>
         /// Initializes the Mapper with an ITypeFormatter.
@@ -51,7 +53,15 @@ namespace ImmutaMap
         /// <returns>An instance of the target type with values mapped from the source instance.</returns>
         public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, Func<object[]> args = null)
         {
-            if (source == null) throw new SourceNullException(typeof(TSource));
+            isThrowingExceptions = map.IsThrowingExceptions;
+            if (source == null)
+            {
+                if (isThrowingExceptions)
+                    throw new SourceNullException(typeof(TSource));
+                else
+                    return default;
+            }
+            isIgnoringCase = map.IsIgnoringCase;
             var target = typeFormatter.GetInstance<TTarget>(args);
             Copy(map, source, target);
             return target;
@@ -113,7 +123,10 @@ namespace ImmutaMap
         {
             if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
-                throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());
+                if (isThrowingExceptions)
+                    throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());
+                else
+                    return;
             }
 
             if (targetPropertyInfo.CanWrite)
@@ -133,15 +146,20 @@ namespace ImmutaMap
 
             mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue;
         }
+
         private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
         {
             foreach (var (sourcePropertyName, resultPropertyName) in map.PropertyNameMaps)
             {
-                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => x.Name == sourcePropertyName);
+                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == sourcePropertyName.ToLowerInvariant() : x.Name == sourcePropertyName);
                 if (sourcePropertyInfo == null) continue;
-                var resultPropertyInfo = resultProperties.FirstOrDefault(x => x.Name == resultPropertyName);
+                var resultPropertyInfo = resultProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == resultPropertyName.ToLowerInvariant() : x.Name == resultPropertyName);
                 if (resultPropertyInfo == null) continue;
-                if (joinedPropertyInfos.Any(x => x.sourcePropertyInfo.Name == sourcePropertyName && x.resultPropertyInfo.Name == resultPropertyName)) continue;
+                if (joinedPropertyInfos.Any(x =>
+                    isIgnoringCase
+                    ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyName.ToLowerInvariant()
+                    : x.sourcePropertyInfo.Name == sourcePropertyName && x.resultPropertyInfo.Name == resultPropertyName))
+                    continue;
                 joinedPropertyInfos.Add((sourcePropertyInfo, resultPropertyInfo));
             }
         }
@@ -149,8 +167,8 @@ namespace ImmutaMap
         private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultPropeties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties)
         {
             return sourceProperties.Join(resultProperties,
-                sourceProperty => sourceProperty.Name,
-                resultProperty => resultProperty.Name,
+                sourceProperty => isIgnoringCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
+                resultProperty => isIgnoringCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
                 (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
                 .ToList();
         }
