@@ -24,7 +24,7 @@ You can make a mapping and build to produce the result without any custom mappin
 
     var b = a.Map<ImmutableTypeA, TypeB>().Build();
 
-Alternately you can use the As<> extension that performs the same task but is simpler and easier to code and read.
+Alternatively you can use the As<> extension that performs the same task but is simpler and easier to code and read.
 
     var b = a.As<B>();
 
@@ -148,6 +148,6 @@ Example:
 
 # Reference
 
-With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
+    With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
 
-Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
+    Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
