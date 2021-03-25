@@ -134,7 +134,7 @@ Example:
     {
         //firstname, lastname etc...
         
-        //In this case, since FamilyMembers is enumeration of Person and each famkily member can also have FamilyMembers.
+        //In this case, since FamilyMembers is enumeration of Person and each family member can also have FamilyMembers.
         //Recusively mapping the members is not yet supported if you are mapping from PersonA to PersonB where one is IEnumerable and the other is ICollection.
         public IEnumerable<PersonA> FamilyMembers { get; }
     }
@@ -149,7 +149,7 @@ Example:
     
     //......
     
-    //Note that, as of now, the MapProperty only goes one deep if each family member requires distinct mapping.
+    //Note that, as of now, the MapProperty only goes one deep.  If each family member, has has family members of it's own, then it requires distinct mapping down the pipe.
     var personB = personA
         .Map<PersonA, PersonB>()
         .MapProperty(source => source.FamilyMembers, familyMembers => familyMembers.ToList())
