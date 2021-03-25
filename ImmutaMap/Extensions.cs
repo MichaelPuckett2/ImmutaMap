@@ -1,6 +1,7 @@
 ﻿using ImmutaMap.Exceptions;
 using ImmutaMap.Interfaces;
 using ImmutaMap.Mappings;
+using ImmutaMap.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
