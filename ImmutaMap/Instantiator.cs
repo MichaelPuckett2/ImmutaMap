@@ -22,5 +22,14 @@ namespace ImmutaMap
             foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return MapBuilder.GetNewInstance().Build(map, target);
         }
+
+        public static T New<T>(bool throwExceptions = true) where T : class
+        {
+            var target = new TypeFormatter().GetInstance<T>();
+            var properties = new List<(string Name, object Value)>();
+            var map = new Map<T, T>(throwExceptions: throwExceptions);
+            foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+            return MapBuilder.GetNewInstance().Build(map, target);
+        }
     }
 }
