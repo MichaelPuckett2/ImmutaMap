@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace ImmutaMap.Exceptions
 {
     public class BuildException : Exception
     {
-        public BuildException(Type targetType, Type producedType)
+        public BuildException(Type producedType, PropertyInfo propertyInfo)
         {
-            if (targetType.IsGenericType)
+            if (propertyInfo.PropertyType.IsGenericType)
             {
-                var genericTargetParameters = string.Join(", ", targetType.GetGenericArguments().Select(x => x.Name));
+                var genericTargetParameters = string.Join(", ", propertyInfo.PropertyType.GetGenericArguments().Select(x => x.Name));
                 var genericProducedParameters = string.Join(", ", producedType.GetGenericArguments().Select(x => x.Name));
-                Message = $"Build failed: The property mapping cannot convert {producedType.Name}<{genericProducedParameters}> to {targetType.Name}<{genericTargetParameters}>. Make sure the mapping produces a result that can be used by the target property. {producedType.Name}<{genericProducedParameters}> cannot become {targetType.Name}<{genericTargetParameters}>. If you haven't already mapped this type you will need to use MapProperty to correct this; if you have then the logic in MapProperty isn't converted as expected.";
+                Message = $"Build failed: The property mapping cannot convert {propertyInfo.Name} of {producedType.Name}<{genericProducedParameters}> to {propertyInfo.PropertyType.Name}<{genericTargetParameters}>. Make sure the mapping produces a result that can be used by the target property. {producedType.Name}<{genericProducedParameters}> cannot become {propertyInfo.PropertyType.Name}<{genericTargetParameters}>. If you haven't already mapped this type you will need to use MapProperty to correct this; if you have then the logic in MapProperty isn't converted as expected.";
             }
             else
             {
-                Message = $"Build failed: The property mapping cannot convert {producedType.Name} to {targetType.Name}. Make sure the mapping produces a result that can be used by the target property. {producedType.Name} cannot become {targetType.Name}. If you haven't already mapped this type you will need to use MapProperty to correct this; if you have then the logic in MapProperty isn't converted as expected.";
+                Message = $"Build failed: The property mapping cannot convert {propertyInfo.Name} of {producedType.Name} to {propertyInfo.PropertyType.Name}. Make sure the mapping produces a result that can be used by the target property. {producedType.Name} cannot become {propertyInfo.PropertyType.Name}. If you haven't already mapped this type you will need to use MapProperty to correct this; if you have then the logic in MapProperty isn't converted as expected.";
             }
         }
 

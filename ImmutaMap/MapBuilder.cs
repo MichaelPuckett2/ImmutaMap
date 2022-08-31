@@ -124,7 +124,7 @@ namespace ImmutaMap
             if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
                 if (isThrowingExceptions)
-                    throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());
+                    throw new BuildException(targetValue.GetType(), targetPropertyInfo);
                 else
                     return;
             }

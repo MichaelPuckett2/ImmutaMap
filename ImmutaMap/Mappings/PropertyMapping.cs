@@ -24,7 +24,7 @@ namespace ImmutaMap.Mappings
                 var targetValue = func?.Invoke(previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
                 if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
                 {
-                    throw new BuildException(targetPropertyInfo.PropertyType, targetValue.GetType());
+                    throw new BuildException(targetValue.GetType(), targetPropertyInfo);
                 }
                 result = targetValue;
                 return true;
