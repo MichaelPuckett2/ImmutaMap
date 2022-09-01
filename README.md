@@ -3,19 +3,70 @@ A type mapper with the ability to also map immutable types in a clean, readable,
 As a result developers and architects would often skip steps writing the proper converters or mappings because the work was extensive and instead rely on non immutable types.
 Immutamap uses reflection to copy immutable types into new types with specific mappings.  The default mapping is a property name to property name mapping with the values as is.
 
+# Quick Ugly Examples (intended just to demo)
+
+    record Person(string FirstName, string LastName, int Age);
+    record Employee(string FullName, int Age, string Position);
+
+    var person = new Person("Michael", "Puckett", 42);
+    var employee = person.As<Employee>()
+        .With(employee => employee.FullName, fullName => $"{person.FirstName} {person.LastName}")
+        .With(employee => employee.Position, position => "Cashier");
+
+Intentionally odd Persons for short example. Notice that Age is integer in one and string in another and how we can use the mapping to account for it by mapping to the AgeValue instead.
+
+    public class PersonDto
+    {
+	    public PersonDto(string firstName, string lastName, int age)
+	    {
+		    FirstName = firstName;
+		    LastName = lastName;
+		    Age = age;
+	    }
+	    public string FirstName { get; }
+	    public string LastName { get; }
+	    public int Age { get; }
+    }
+
+    public class Person
+    {
+        public Person(string firstName, string lastName, string age, int ageValue)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+            Age = age;
+            AgeValue = ageValue;
+        }
+        public string FirstName { get; }
+        public string LastName { get; }
+        public string Age { get; }
+        public int AgeValue { get; }
+    }
+
+    var person = new Person("Michael", "Puckett", "42", 42);
+    var personDto = person.As<Person, PersonDto>(map => map.MapPropertyName(s => s.AgeValue, t => t.Age));
+
+    //another way to do this you can control the builder directly.
+    var personDto = person
+        .Map<Person, PersonDto>()
+        .MapPropertyName((source) => source.AgeValue, (target) => target.Age)
+        .Build();
+
 ## Quick mapping of same type
 In some cases you might want to just update the one or more fields of an immutable type.
 The result is a new immutable type of the same type with the selected fields only modified.
 
 Example, suppose person has a FirstName, LastName and Age where we want to make a twin person with only a different first name.
 
-    var twinBrother = person.MapSelf(x => x.FirstName, firstName => "John").Build();
+    var michael = new Person("Michael", "Puckett", 42);
 
-You can also create an anoymous type that maps for you with the With extension.
-However note that, although this pattern is cleaner and easier to read, FirstName is dynamic in the With statement and intellisense will not assist in finding the correct property name here.
-This also follows a similar pattern used with records in .NET 5.0 / C# 9.0, which may make transitioning easier and or legacy immutable mappings look more modern.
+    var twinBrotherJohn = michael.MapSelf(x => x.FirstName, firstName => "John").Build();
 
-    var twinBrother = person.With(new { FirstName = "John" }); 
+    //or
+    var twinBrotherJohn = michael.With(new { FirstName = "John" });
+
+    //or
+    var twinBrotherJohn = michael.With(x => x.FirstName, x => "John");
 
 ## Mapping one type to another where property names are the same
 Example:  ImmutableTypeA mapped to TypeB (even non immutable) then ImmutableTypeA.FirstName would automatically map to TypeB.FirstName.
@@ -33,6 +84,16 @@ You can even continue this mapping with a change to any specific fields on the o
     var b = a.As<B>().With(x => x.FirstName, firstName = "John");
 
 However; note that the above step is ok for smaller mappings but not as good as using the Map<TSource, TTarget>().Build() extensions.  When using the Map<TSource, TTarget> extension all mappings are stored and triggered once during the Build operation, producing one result.  The above example using the As<T> extension will actually produce the result and then remap that same result with the With extension.  This internally is 2 operations.  Point being, if you intend to have more than one operation it is recommended to start with the Map<TSource, TTarget> extension.
+
+### Edit: Now the As<T> extension provides a map override to keep this as one operation but requires you to provide the TSource and TTarget types.
+
+    record Person(string FirstName, string LastName, int Age);
+    record PersonDto(string First_Name, string Last_Name, int Age);
+
+    var michael = new Person("Michael", "Puckett", 42);
+    var michaelDto = michael.As<Person, PersonDto>(map => map
+        .MapPropertyName(x => x.FirstName, x => x.First_Name)
+        .MapPropertyName(x => x.LastName, x => x.Last_Name));
 
 ## Mapping types with variances in property names
 If TypeB has a different spelling of FirstName, such as First_Name then you could also do this.
@@ -155,8 +216,8 @@ Example:
         .MapProperty(source => source.FamilyMembers, familyMembers => familyMembers.ToList())
         .Build();
 
-# Reference
+# To Know!
 
-    With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType> and the As<T> extensions produce a result immediately and, although they can be chained, each use of With<...> or As<T> will return an instantiated type before moving to the next event.
+When using With<T>, With<TSource, TTarget>, With<T, TSourcePropertyType>, and As<T> extension an instantiated type will be returned.  Although you can chain them, know that they are meant to be used as a single call because chaining will result in multiple types being instantiated behind the scenes. You can alternatively use the As<TSource, TTarget> extension, which allows you to perform the mapping in as a parameter.
 
-    Map<TSource, TTarget> and all extensions beginning with the word Map are lazy.  They will only produce one single result but must be closed calling the Build extension to do so.
+You may also call the Map<TSource, TTarget> extension to chain as many mappings as you want but the chain must be closed with the Build() extension.

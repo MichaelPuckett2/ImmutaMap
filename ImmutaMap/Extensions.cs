@@ -46,7 +46,7 @@ namespace ImmutaMap
 
             foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
             return map;
-        }      
+        }
 
         /// <summary>
         /// Maps the name of the source property to the name of the target property.  Example: TypeA.FirstName can map to TypeB.First_Name
@@ -62,11 +62,9 @@ namespace ImmutaMap
             Expression<Func<TSource, object>> sourceExpression,
             Expression<Func<TResult, object>> targetExpression)
         {
-            if (sourceExpression.Body is MemberExpression sourceMemberExpression
-            && targetExpression.Body is MemberExpression resultMemberExpression)
-            {
-                map.AddPropertyNameMapping(sourceMemberExpression.Member.Name, resultMemberExpression.Member.Name);
-            }
+            var sourceMemberName = GetMemberName(sourceExpression.Body);
+            var targetMemberName = GetMemberName(targetExpression.Body);
+            map.AddPropertyNameMapping(sourceMemberName, targetMemberName);
             return map;
         }
 
@@ -216,6 +214,26 @@ namespace ImmutaMap
         public static T As<T>(this object obj, bool ignoreCase = false, bool throwExceptions = true)
         {
             return MapBuilder.GetNewInstance().Build(new Map<object, T>(ignoreCase, throwExceptions), obj);
+        }
+
+        public static TTarget As<TSource, TTarget>(this TSource source, Func<Map<TSource, TTarget>, Map<TSource, TTarget>> mapping, bool ignoreCase = false, bool throwExceptions = true)
+        {
+            return mapping.Invoke(new Map<TSource, TTarget>(source, ignoreCase, throwExceptions)).Build();
+        }
+
+        private static string GetMemberName(Expression expression)
+        {
+            return expression switch
+            {
+                MemberExpression memberExpression => memberExpression.Member.Name,
+                MethodCallExpression methodCallExpression => methodCallExpression.Method.Name,
+                UnaryExpression unaryExpression => unaryExpression.Operand switch
+                {
+                    MethodCallExpression methodCallExpression => methodCallExpression.Method.Name,
+                    _ => ((MemberExpression)unaryExpression.Operand).Member.Name
+                },
+                _ => throw new ArgumentException(nameof(Expression))
+            };
         }
     }
 }

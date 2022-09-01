@@ -71,7 +71,7 @@ namespace ImmutaMap
         {
             var sourcePropertyInfos = source.GetType().GetProperties().ToList();
             var targetPropertyInfos = typeof(TTarget).GetProperties().ToList();
-            var joinedPropertyInfos = GetSourceResultPropeties(sourcePropertyInfos, targetPropertyInfos);
+            var joinedPropertyInfos = GetSourceResultProperties(sourcePropertyInfos, targetPropertyInfos);
             AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 
             foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
@@ -149,24 +149,33 @@ namespace ImmutaMap
 
         private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
         {
-            foreach (var (sourcePropertyName, resultPropertyName) in map.PropertyNameMaps)
+            foreach (var (sourcePropertyMapName, resultPropertyMapName) in map.PropertyNameMaps)
             {
-                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == sourcePropertyName.ToLowerInvariant() : x.Name == sourcePropertyName);
+                var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
                 if (sourcePropertyInfo == null) continue;
-                var resultPropertyInfo = resultProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == resultPropertyName.ToLowerInvariant() : x.Name == resultPropertyName);
+                var resultPropertyInfo = resultProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
                 if (resultPropertyInfo == null) continue;
                 if (joinedPropertyInfos.Any(x =>
                     isIgnoringCase
-                    ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyName.ToLowerInvariant()
-                    : x.sourcePropertyInfo.Name == sourcePropertyName && x.resultPropertyInfo.Name == resultPropertyName))
+                    ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant()
+                    : x.sourcePropertyInfo.Name == sourcePropertyMapName && x.resultPropertyInfo.Name == resultPropertyMapName))
+
+                {
                     continue;
+                }
+                var existingJoinedPropertyInfo = joinedPropertyInfos
+                    .FirstOrDefault(x => x.sourcePropertyInfo.Name == sourcePropertyInfo.Name || x.resultPropertyInfo.Name == resultPropertyInfo.Name);
+                if (existingJoinedPropertyInfo != default)
+                {
+                    joinedPropertyInfos.Remove(existingJoinedPropertyInfo);
+                }
                 joinedPropertyInfos.Add((sourcePropertyInfo, resultPropertyInfo));
             }
         }
 
-        private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultPropeties(List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties)
+        private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultProperties(List<PropertyInfo> sourceProperties, List<PropertyInfo> targetProperties)
         {
-            return sourceProperties.Join(resultProperties,
+            return sourceProperties.Join(targetProperties,
                 sourceProperty => isIgnoringCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
                 resultProperty => isIgnoringCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
                 (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
