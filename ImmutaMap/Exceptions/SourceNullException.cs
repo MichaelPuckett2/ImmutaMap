@@ -1,10 +1,7 @@
-﻿using System;
+﻿namespace ImmutaMap.Exceptions;
 
-namespace ImmutaMap.Exceptions
+public class SourceNullException : Exception
 {
-    public class SourceNullException : Exception
-    {
-        public SourceNullException(Type type)
-        : base($"Source for {type.Name} was null and cannot be built.") { }
-    }
+    public SourceNullException(Type type)
+    : base($"Source for {type.Name} was null and cannot be built.") { }
 }

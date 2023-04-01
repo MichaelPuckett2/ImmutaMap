@@ -1,31 +1,42 @@
 ﻿using ImmutaMap.Interfaces;
-using System;
 using System.Reflection;
 
-namespace ImmutaMap.Mappings
+namespace ImmutaMap.Mappings;
+
+public class SourceTypeMapping : IMapping
 {
-    public class SourceTypeMapping : IMapping
+    private readonly Type type;
+    private readonly Func<object, object> typeMapFunc;
+
+    public SourceTypeMapping(Type type, Func<object, object> typeMapFunc)
     {
-        private readonly Type type;
-        private readonly Func<object, object> typeMapFunc;
+        this.type = type;
+        this.typeMapFunc = typeMapFunc;
+    }
 
-        public SourceTypeMapping(Type type, Func<object, object> typeMapFunc)
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+    {
+        if (sourcePropertyInfo.PropertyType != type)
         {
-            this.type = type;
-            this.typeMapFunc = typeMapFunc;
+            result = default!;
+            return false;
         }
 
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
+        result = typeMapFunc.Invoke(sourcePropertyInfo.GetValue(source)!);
+
+        return true;
+    }
+
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
+    {
+        if (sourcePropertyInfo.PropertyType != type)
         {
-            if (sourcePropertyInfo.PropertyType != type)
-            {
-                result = default;
-                return false;
-            }
-
-            result = typeMapFunc.Invoke(previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
-
-            return true;
+            result = default!;
+            return false;
         }
+
+        result = typeMapFunc.Invoke(previouslyMappedValue);
+
+        return true;
     }
 }

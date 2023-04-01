@@ -1,12 +1,10 @@
-﻿using System;
+﻿namespace ImmutaMap.Interfaces;
 
-namespace ImmutaMap.Interfaces
+/// <summary>
+/// Represents a type that can get the instance of a value T.
+/// </summary>
+public interface ITypeFormatter
 {
-    /// <summary>
-    /// Represents a type that can get the instance of a value T.
-    /// </summary>
-    public interface ITypeFormatter
-    {
-        T GetInstance<T>(Func<object[]> args = null);
-    }
+    T GetInstance<T>();
+    T GetInstance<T>(Func<object[]> args);
 }

@@ -1,35 +1,34 @@
 ﻿using ImmutaMap.Mappings;
 using ImmutaMap.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using System.Reflection;
 
-namespace ImmutaMap
+namespace ImmutaMap;
+
+public static class Instantiator
 {
-    public static class Instantiator
+    public static T New<T>(dynamic a, Action<MapConfiguration<T>> mapConfigurationAction) where T : class
     {
-        public static T New<T>(dynamic a, bool throwExceptions = true) where T : class
+        var target = new TypeFormatter().GetInstance<T>();
+        var properties = new List<(string Name, object Value)>();
+        foreach (var prop in a.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
         {
-            var target = new TypeFormatter().GetInstance<T>();
-            var properties = new List<(string Name, object Value)>();
-            foreach (var prop in a.GetType().GetProperties())
-            {
-                var foundProp = typeof(T).GetProperty(prop.Name);
-                if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
-            }
-            var map = new Map<T, T>(throwExceptions: throwExceptions);
-
-            foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
-            return MapBuilder.GetNewInstance().Build(map, target);
+            var foundProp = typeof(T).GetProperty(prop.Name);
+            if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
+        var mapConfiguration = new MapConfiguration<T>();
+        mapConfigurationAction.Invoke(mapConfiguration);
+        var map = new Map<T, T>(target, mapConfiguration);
 
-        public static T New<T>(bool throwExceptions = true) where T : class
-        {
-            var target = new TypeFormatter().GetInstance<T>();
-            var properties = new List<(string Name, object Value)>();
-            var map = new Map<T, T>(throwExceptions: throwExceptions);
-            foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
-            return MapBuilder.GetNewInstance().Build(map, target);
-        }
+        foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+        return MapBuilder.GetNewInstance().Build(map, target);
+    }
+
+    public static T New<T>() where T : class
+    {
+        var target = new TypeFormatter().GetInstance<T>();
+        var properties = new List<(string Name, object Value)>();
+        var map = new Map<T, T>(target, MapConfiguration<T>.Empty);
+        foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+        return MapBuilder.GetNewInstance().Build(map, target);
     }
 }

@@ -1,39 +1,57 @@
 ﻿using ImmutaMap.Exceptions;
 using ImmutaMap.Interfaces;
-using System;
 using System.Reflection;
 
-namespace ImmutaMap.Mappings
+namespace ImmutaMap.Mappings;
+
+public class PropertyMapping<TSourcePropertyType> : IMapping
 {
-    public class PropertyMapping<TSourcePropertyType> : IMapping
+    private readonly (string Name, Type type) key;
+    private readonly Func<object, object> func;
+
+    public PropertyMapping(string name, Func<TSourcePropertyType, object> propertyResultFunc)
     {
-        private readonly (string Name, Type type) key;
-        private readonly Func<object, object> func;
+        key = (name, typeof(TSourcePropertyType));
+        func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue));
+    }
 
-        public PropertyMapping(string name, Func<TSourcePropertyType, object> propertyResultFunc)
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+    {
+        var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
+        if (key == propertyMapFuncsKey)
         {
-            key = (name, typeof(TSourcePropertyType));
-            func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue));
+            var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(source)!)!;
+            if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
+            {
+                throw new BuildException(targetValue.GetType(), targetPropertyInfo);
+            }
+            result = targetValue;
+            return true;
         }
-
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue,  out object result)
+        else
         {
-            var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
-            if (key == propertyMapFuncsKey)
+            result = default!;
+            return false;
+        }
+    }
+
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue,  out object result)
+    {
+        var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
+        if (key == propertyMapFuncsKey)
+        {
+            var targetValue = func?.Invoke(previouslyMappedValue)!;
+            if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
-                var targetValue = func?.Invoke(previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
-                if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
-                {
-                    throw new BuildException(targetValue.GetType(), targetPropertyInfo);
-                }
-                result = targetValue;
-                return true;
+                throw new BuildException(targetValue.GetType(), targetPropertyInfo);
             }
-            else
-            {
-                result = default;
-                return false;
-            }
+            result = targetValue;
+            return true;
+        }
+        else
+        {
+            result = default!;
+            return false;
         }
     }
 }
