@@ -185,6 +185,7 @@ public class MapBuilder
     }
 
     private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
+        where TSource : notnull where TResult : notnull
     {
         foreach (var (sourcePropertyMapName, resultPropertyMapName) in map.PropertyNameMaps)
         {

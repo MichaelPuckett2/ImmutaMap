@@ -5,12 +5,12 @@ namespace ImmutaMap;
 /// <summary>
 /// Configurations used for mapping.
 /// </summary>
-public class MapConfiguration<T>
+public class MapConfiguration<TSource, TTarget> where TSource : notnull where TTarget : notnull
 {
     /// <summary>
     /// Properties that will skip mappingp.
     /// </summary>
-    public IList<Expression<Func<T, object>>> Skips { get; } = new List<Expression<Func<T, object>>>();
+    public IList<Expression<Func<TSource, TTarget>>> Skips { get; } = new List<Expression<Func<TSource, TTarget>>>();
 
     /// <summary>
     /// When true mapping will ignore property casing.
@@ -24,9 +24,9 @@ public class MapConfiguration<T>
 
     internal HashSet<(string SourcePropertyName, string TargetPropertyName)> PropertyNameMaps { get; } = new HashSet<(string, string)>();
 
-    public MapConfiguration<T> AddPropertyNameMap<TSource, TResult>(
-        Expression<Func<TSource, object>> sourceExpression,
-        Expression<Func<TResult, object>> targetExpression)
+    public MapConfiguration<TSource, TTarget> AddPropertyNameMap<TResult>(
+        Expression<Func<TSource, TResult>> sourceExpression,
+        Expression<Func<TTarget, TResult>> targetExpression)
     {
         PropertyNameMaps.Add((sourceExpression.GetMemberName(), targetExpression.GetMemberName()));
         return this;
@@ -34,5 +34,5 @@ public class MapConfiguration<T>
     /// <summary>
     /// Static empty MapConfiguration.
     /// </summary>
-    public static MapConfiguration<T> Empty { get; } = new MapConfiguration<T>();
+    public static MapConfiguration<TSource, TTarget> Empty { get; } = new MapConfiguration<TSource, TTarget>();
 }

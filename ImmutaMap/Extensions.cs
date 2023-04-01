@@ -16,8 +16,9 @@ public static class Extensions
     /// <param name="source">The source values used during the build process after mapping.</param>
     /// <returns>returns a Map that can be modified, stored, or built for a result.</returns>
     public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source)
+        where TSource : notnull where TTarget : notnull
     {
-        return new Map<TSource, TTarget>(source, MapConfiguration<TTarget>.Empty);
+        return new Map<TSource, TTarget>(source, MapConfiguration<TSource, TTarget>.Empty);
     }
 
     /// <summary>
@@ -29,9 +30,10 @@ public static class Extensions
     /// <param name="source">The source values used during the build process after mapping.</param>
     /// <param name="mapConfigurationAction">Sets mapping configurations inline.</param>
     /// <returns>returns a Map that can be modified, stored, or built for a result.</returns>
-    public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source, Action<MapConfiguration<TTarget>> mapConfigurationAction)
+    public static Map<TSource, TTarget> Map<TSource, TTarget>(this TSource source, Action<MapConfiguration<TSource, TTarget>> mapConfigurationAction)
+        where TSource : notnull where TTarget : notnull
     {
-        var mapConfiguration = new MapConfiguration<TTarget>();
+        var mapConfiguration = new MapConfiguration<TSource, TTarget>();
         mapConfigurationAction.Invoke(mapConfiguration);
         var map = new Map<TSource, TTarget>(source, mapConfiguration);
         foreach (var (SourcePropertyName, TargetPropertyName) in mapConfiguration.PropertyNameMaps)
@@ -50,6 +52,7 @@ public static class Extensions
     public static Map<T, TSourceProperty> MapSelf<T, TSourceProperty>(
         this Map<T, TSourceProperty> map,
         dynamic a)
+        where T : notnull where TSourceProperty : notnull
     {
         var properties = new List<(string Name, object Value)>();
         foreach (var prop in a.GetType().GetProperties())
@@ -75,6 +78,7 @@ public static class Extensions
         this Map<TSource, TResult> map,
         Expression<Func<TSource, object>> sourceExpression,
         Expression<Func<TResult, object>> targetExpression)
+        where TSource : notnull where TResult : notnull
     {
         var sourceMemberName = GetMemberName(sourceExpression.Body);
         var targetMemberName = GetMemberName(targetExpression.Body);
@@ -91,11 +95,12 @@ public static class Extensions
     /// <param name="map">The Map this method works against.</param>
     /// <param name="sourceExpression">The expression used to get the source property name and value. Invoked on Build()</param>
     /// <param name="propertyResultFunc">The function used to get the target property value. Invoked on Build()</param>
-    /// <returns>The Map this method workds against.</returns>
+    /// <returns>The Map this method works against.</returns>
     public static Map<TSource, TTarget> MapProperty<TSource, TTarget, TSourcePropertyType>(
         this Map<TSource, TTarget> map,
         Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
         Func<TSourcePropertyType, object> propertyResultFunc)
+        where TSource : notnull where TTarget : notnull
     {
         if (sourceExpression.Body is MemberExpression sourceMemberExpression)
         {
@@ -113,7 +118,8 @@ public static class Extensions
     /// <param name="map">The map used in this method.</param>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>The map thsi method works against.</returns>
-    public static Map<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
+    public static Map<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) 
+        where TAttribute : Attribute where TSource : notnull where TTarget : notnull
     {
         var att = new SourceAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
         map.AddMapping(att);
@@ -129,7 +135,8 @@ public static class Extensions
     /// <param name="map">The map used in this method.</param>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>The map thsi method works against.</returns>
-    public static Map<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) where TAttribute : Attribute
+    public static Map<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(this Map<TSource, TTarget> map, Func<TAttribute, object, object> func) 
+        where TAttribute : Attribute where TSource : notnull where TTarget : notnull
     {
         var att = new TargetAttributeMapping<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
         map.AddMapping(att);
@@ -145,6 +152,7 @@ public static class Extensions
     /// <param name="mapping">The custom mapping added.</param>
     /// <returns>The map this method works against.</returns>
     public static Map<TSource, TTarget> MapCustom<TSource, TTarget>(this Map<TSource, TTarget> map, IMapping mapping)
+        where TSource : notnull where TTarget : notnull
     {
         if (mapping == null) throw new MappingNullException();
         map.AddMapping(mapping);
@@ -161,6 +169,7 @@ public static class Extensions
     /// <param name="typeMapFunc">The function used to get the result value.</param>
     /// <returns>The map this method works against.</returns>
     public static Map<TSource, TTarget> MapType<TSource, TTarget, TType>(this Map<TSource, TTarget> map, Func<object, object> typeMapFunc)
+        where TSource : notnull where TTarget : notnull
     {
         var typeMapping = new SourceTypeMapping(typeof(TType), typeMapFunc);
         map.AddMapping(typeMapping);
@@ -194,7 +203,7 @@ public static class Extensions
             var foundProp = typeof(T).GetProperty(prop.Name);
             if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
-        var map = new Map<T, T>(t, MapConfiguration<T>.Empty);
+        var map = new Map<T, T>(t, MapConfiguration<T, T>.Empty);
 
         foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
         return MapBuilder.GetNewInstance().Build(map, t);
@@ -209,9 +218,9 @@ public static class Extensions
     /// <param name="mapConfiguration">MapConfiguration that can be supplied to mapping.</param>
     /// <param name="throwExceptions">Options value that determines if exceptions will be thrown or handled silently.  Default is true to throw exceptoipns.</param>
     /// <returns>Instantiated T target value.</returns>
-    public static T With<T>(this T t, dynamic a, Action<MapConfiguration<T>> mapConfigurationAction) where T : notnull
+    public static T With<T>(this T t, dynamic a, Action<MapConfiguration<T, T>> mapConfigurationAction) where T : notnull
     {
-        var mapConfiguration = new MapConfiguration<T>();
+        var mapConfiguration = new MapConfiguration<T, T>();
         mapConfigurationAction.Invoke(mapConfiguration);
         var properties = new List<(string Name, object Value)>();
         foreach (var prop in a.GetType().GetProperties())
@@ -245,7 +254,7 @@ public static class Extensions
                                                              Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
         where TSource : notnull where TSourcePropertyType : notnull
     {
-        var action = new Action<MapConfiguration<TSource>>(x => { });
+        var action = new Action<MapConfiguration<TSource, TSource>>(x => { });
         return t.Map(action).MapProperty(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!).Build();
     }
 
@@ -257,37 +266,44 @@ public static class Extensions
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
     public static T As<T>(this object obj) where T : notnull
     {
-        return MapBuilder.GetNewInstance().Build(new Map<object, T>(obj, MapConfiguration<T>.Empty), obj);
+        return MapBuilder.GetNewInstance().Build(new Map<object, T>(obj, MapConfiguration<object, T>.Empty), obj);
     }
 
     /// <summary>
     /// For simple one to one mappings from type to type.
     /// </summary>
     /// <typeparam name="T">The type to map to.</typeparam>
-    /// <param name="obj">The obejct this method works against.</param>
+    /// <param name="source">The obejct this method works against.</param>
     /// <param name="mapConfigurationAction">Sets mapping configurations inline.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static T As<T>(this object obj, Action<MapConfiguration<T>> mapConfigurationAction) where T : notnull
+    public static TTarget As<TSource, TTarget>(this TSource source, Action<MapConfiguration<TSource, TTarget>> mapConfigurationAction)
+        where TSource: notnull where TTarget : notnull
     {
-        var mapConfiguration = new MapConfiguration<T>();
+        var mapConfiguration = new MapConfiguration<TSource, TTarget>();
         mapConfigurationAction.Invoke(mapConfiguration);
-        return MapBuilder.GetNewInstance().Build(new Map<object, T>(obj, mapConfiguration), obj);
+        var map = new Map<TSource, TTarget>(source, mapConfiguration);
+        foreach (var (SourcePropertyName, TargetPropertyName) in mapConfiguration.PropertyNameMaps)
+            map.AddPropertyNameMapping(SourcePropertyName, TargetPropertyName);
+        return MapBuilder.GetNewInstance().Build(map, source);
     }
 
     public static TTarget As<TSource, TTarget>(this TSource source, Func<Map<TSource, TTarget>, Map<TSource, TTarget>> mapping)
         where TSource : notnull where TTarget : notnull
     {
-        return mapping.Invoke(new Map<TSource, TTarget>(source, MapConfiguration<TTarget>.Empty)).Build();
+        return mapping.Invoke(new Map<TSource, TTarget>(source, MapConfiguration<TSource, TTarget>.Empty)).Build();
     }
 
     public static TTarget As<TSource, TTarget>(this TSource source,
                                                Func<Map<TSource, TTarget>, Map<TSource, TTarget>> mapping,
-                                               Action<MapConfiguration<TTarget>> mapConfigurationAction)
+                                               Action<MapConfiguration<TSource, TTarget>> mapConfigurationAction)
         where TSource : notnull where TTarget : notnull
     {
-        var mapConfiguration = new MapConfiguration<TTarget>();
+        var mapConfiguration = new MapConfiguration<TSource, TTarget>();
         mapConfigurationAction.Invoke(mapConfiguration);
-        return mapping.Invoke(new Map<TSource, TTarget>(source, mapConfiguration)).Build();
+        var map = new Map<TSource, TTarget>(source, mapConfiguration);
+        foreach (var (SourcePropertyName, TargetPropertyName) in mapConfiguration.PropertyNameMaps)
+            map.AddPropertyNameMapping(SourcePropertyName, TargetPropertyName);
+        return mapping.Invoke(map).Build();
     }
 
     internal static string GetMemberName(this Expression expression)

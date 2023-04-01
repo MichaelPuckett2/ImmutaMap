@@ -50,7 +50,24 @@ namespace ImmutaMap.Test
         }
 
         [TestMethod]
-        public void TestPropertyNameMapping()
+        public void TestPropertyNameAsMapping()
+        {
+            //Arrange
+            var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
+
+            //Act
+            var personClass = personRecord
+                .As<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
+                config.AddPropertyNameMap(x => x.LastName, x => x.Last_Name));
+
+            //Assert
+            Assert.AreEqual(personRecord.FirstName, personClass.FirstName);
+            Assert.AreEqual(personRecord.LastName, personClass.Last_Name);
+            Assert.AreEqual(personRecord.Age, personClass.Age);
+        }
+
+        [TestMethod]
+        public void TestPropertyNameMapBuilderMapping()
         {
             //Arrange
             var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
@@ -60,7 +77,8 @@ namespace ImmutaMap.Test
                 .Map<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
                 {
                     config
-                    .AddPropertyNameMap<PersonRecord, PersonClassLastNameSpelledDifferent>(x => x.LastName, x => x.Last_Name);
+                    .AddPropertyNameMap(x => x.LastName, x => x.Last_Name);
+                    //.AddPropertyNameMap<PersonRecord, PersonClassLastNameSpelledDifferent>(x => x.LastName, x => x.Last_Name);
                 })
                 .Build();
 
@@ -69,38 +87,5 @@ namespace ImmutaMap.Test
             Assert.AreEqual(personRecord.LastName, personClass.Last_Name);
             Assert.AreEqual(personRecord.Age, personClass.Age);
         }
-    }
-
-    public record PersonRecord(string FirstName, string LastName, int Age)
-    {
-        public static PersonRecord Empty { get; } = new(string.Empty, string.Empty, int.MinValue);
-    }
-
-    public class PersonClass
-    {
-        public PersonClass(string firstName, string lastName, int age)
-        {
-            FirstName = firstName;
-            LastName = lastName;
-            Age = age;
-        }
-        public string FirstName { get; }
-        public string LastName { get; }
-        public int Age { get; }
-        public static PersonClass Empty { get; } = new(string.Empty, string.Empty, int.MinValue);
-    }
-
-    public class PersonClassLastNameSpelledDifferent
-    {
-        public PersonClassLastNameSpelledDifferent(string firstName, string last_Name, int age)
-        {
-            FirstName = firstName;
-            Last_Name = last_Name;
-            Age = age;
-        }
-        public string FirstName { get; }
-        public string Last_Name { get; }
-        public int Age { get; }
-        public static PersonClass Empty { get; } = new(string.Empty, string.Empty, int.MinValue);
     }
 }

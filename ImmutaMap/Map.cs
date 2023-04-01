@@ -2,12 +2,12 @@
 
 namespace ImmutaMap;
 
-public class Map<TSource, TTarget>
+public class Map<TSource, TTarget> where TSource : notnull where TTarget : notnull
 {
     private readonly List<(string SourceProperty, string ResultProperty)> propertyNameMaps = new();
     private readonly IList<IMapping> mappings = new List<IMapping>();
 
-    public Map(TSource source, MapConfiguration<TTarget> mapConfiguration)
+    public Map(TSource source, MapConfiguration<TSource, TTarget> mapConfiguration) 
     {
         Source = source;
         MapConfiguration = mapConfiguration;
@@ -19,7 +19,7 @@ public class Map<TSource, TTarget>
     internal IEnumerable<IMapping> Mappings => mappings;
 
     internal IEnumerable<(string SourceProperty, string ResultProperty)> PropertyNameMaps => propertyNameMaps.ToList();
-    internal MapConfiguration<TTarget> MapConfiguration { get; }
+    internal MapConfiguration<TSource, TTarget> MapConfiguration { get; }
 
     public TSource Source { get; internal set; }
 
@@ -33,7 +33,7 @@ public class Map<TSource, TTarget>
     /// </summary>
     public bool WillNotThrowExceptions { get; }
 
-    public void AddPropertyNameMapping(string sourcePropertyName, string targetPropertyName)
+    internal void AddPropertyNameMapping(string sourcePropertyName, string targetPropertyName)
     {
         propertyNameMaps.Add((sourcePropertyName, targetPropertyName));
     }
