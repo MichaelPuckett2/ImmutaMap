@@ -1,31 +1,44 @@
 ﻿using ImmutaMap.Interfaces;
-using System;
 using System.Reflection;
 
-namespace ImmutaMap.Mappings
+namespace ImmutaMap.Mappings;
+
+public class SourceAttributeMapping<TAttribute> : IMapping where TAttribute : Attribute
 {
-    public class SourceAttributeMapping<TAttribute> : IMapping where TAttribute : Attribute
+    private readonly Func<Attribute, object, object> func;
+
+    public SourceAttributeMapping(Func<Attribute, object, object> func)
     {
-        private readonly Func<Attribute, object, object> func;
+        this.func = func;
+    }
 
-        public SourceAttributeMapping(Func<Attribute, object, object> func)
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
+    {
+        var attribute = sourcePropertyInfo.GetCustomAttribute<TAttribute>();
+        if (attribute != null)
         {
-            this.func = func;
+            result = func.Invoke(attribute, sourcePropertyInfo.GetValue(source)!);
+            return true;
         }
-
-        public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
+        else
         {
-            var attribute = sourcePropertyInfo.GetCustomAttribute<TAttribute>();
-            if (attribute != null)
-            {
-                result = func.Invoke(attribute, previouslyMappedValue ?? sourcePropertyInfo.GetValue(source));
-                return true;
-            }
-            else
-            {
-                result = default;
-                return false;
-            }
+            result = default!;
+            return false;
+        }
+    }
+
+    public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
+    {
+        var attribute = sourcePropertyInfo.GetCustomAttribute<TAttribute>();
+        if (attribute != null)
+        {
+            result = func.Invoke(attribute, previouslyMappedValue);
+            return true;
+        }
+        else
+        {
+            result = default!;
+            return false;
         }
     }
 }

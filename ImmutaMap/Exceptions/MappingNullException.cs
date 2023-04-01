@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace ImmutaMap.Exceptions;
 
-namespace ImmutaMap.Exceptions
+public class MappingNullException : Exception
 {
-    public class MappingNullException : Exception
-    {
-        public MappingNullException() : base("Mapping cannot be null.") { }
-    }
+    public MappingNullException() : base("Mapping cannot be null.") { }
 }
