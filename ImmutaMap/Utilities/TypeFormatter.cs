@@ -8,6 +8,7 @@ namespace ImmutaMap.Utilities;
 /// </summary>
 public class TypeFormatter : ITypeFormatter
 {
+    /// <inheritdoc />
     public T GetInstance<T>()
     {
         T result;
@@ -26,6 +27,7 @@ public class TypeFormatter : ITypeFormatter
         return result;
     }
 
+    /// <inheritdoc />
     public T GetInstance<T>(Func<object[]> args)
     {
         T result;

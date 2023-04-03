@@ -5,6 +5,18 @@
 /// </summary>
 public interface ITypeFormatter
 {
+    /// <summary>
+    /// Gets an instance to T
+    /// </summary>
+    /// <typeparam name="T">Type to initialize.</typeparam>
+    /// <returns>Initialized T</returns>
     T GetInstance<T>();
+
+    /// <summary>
+    /// Gets an instance to T
+    /// </summary>
+    /// <typeparam name="T">Type to initialize.</typeparam>
+    /// <param name="args">Arguments used for initializing.</param>
+    /// <returns>Initialized T</returns>
     T GetInstance<T>(Func<object[]> args);
 }
