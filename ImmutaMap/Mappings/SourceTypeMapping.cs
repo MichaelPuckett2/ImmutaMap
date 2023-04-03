@@ -3,6 +3,7 @@ using System.Reflection;
 
 namespace ImmutaMap.Mappings;
 
+/// <inheritdoc />
 public class SourceTypeMapping : IMapping
 {
     private readonly Type type;
@@ -14,6 +15,7 @@ public class SourceTypeMapping : IMapping
         this.typeMapFunc = typeMapFunc;
     }
 
+    /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
     {
         if (sourcePropertyInfo.PropertyType != type)
@@ -27,6 +29,7 @@ public class SourceTypeMapping : IMapping
         return true;
     }
 
+    /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
     {
         if (sourcePropertyInfo.PropertyType != type)

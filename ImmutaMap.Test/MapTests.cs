@@ -41,7 +41,7 @@ namespace ImmutaMap.Test
             var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
 
             //Act
-            var personClass = personRecord.Map<PersonRecord, PersonClass>().Build();
+            var personClass = personRecord.BeginMap<PersonRecord, PersonClass>().Build();
 
             //Assert
             Assert.AreEqual(personRecord.FirstName, personClass.FirstName);
@@ -74,11 +74,10 @@ namespace ImmutaMap.Test
 
             //Act
             var personClass = personRecord
-                .Map<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
+                .BeginMap<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
                 {
                     config
                     .AddPropertyNameMap(x => x.LastName, x => x.Last_Name);
-                    //.AddPropertyNameMap<PersonRecord, PersonClassLastNameSpelledDifferent>(x => x.LastName, x => x.Last_Name);
                 })
                 .Build();
 

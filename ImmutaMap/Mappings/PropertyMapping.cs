@@ -4,6 +4,7 @@ using System.Reflection;
 
 namespace ImmutaMap.Mappings;
 
+/// <inheritdoc />
 public class PropertyMapping<TSourcePropertyType> : IMapping
 {
     private readonly (string Name, Type type) key;
@@ -15,6 +16,7 @@ public class PropertyMapping<TSourcePropertyType> : IMapping
         func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue));
     }
 
+    /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
     {
         var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
@@ -35,6 +37,7 @@ public class PropertyMapping<TSourcePropertyType> : IMapping
         }
     }
 
+    /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue,  out object result)
     {
         var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);

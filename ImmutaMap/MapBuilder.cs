@@ -1,6 +1,7 @@
 ﻿using ImmutaMap.Exceptions;
 using ImmutaMap.Interfaces;
 using ImmutaMap.Utilities;
+using System.IO.MemoryMappedFiles;
 using System.Reflection;
 
 namespace ImmutaMap;
@@ -9,7 +10,7 @@ public class MapBuilder
 {
     private readonly ITypeFormatter typeFormatter;
     private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
-    private bool isIgnoringCase = false;
+    private bool ignoreCase = false;
     private bool willNotThrowExceptions = true;
 
     /// <summary>
@@ -39,35 +40,13 @@ public class MapBuilder
     /// </summary>
     /// <typeparam name="TSource">The source type mapped from.</typeparam>
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
-    /// <param name="map">The Map used to build.</param>
+    /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map) where TSource : notnull where TTarget : notnull
-        => Build(map, map.Source);
-
-    /// <summary>
-    /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
-    /// </summary>
-    /// <typeparam name="TSource">The source type mapped from.</typeparam>
-    /// <typeparam name="TTarget">The target type mapped to.</typeparam>
-    /// <param name="map">The Map used to build.</param>
-    /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
-    /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, Func<object[]> args) where TSource: notnull where TTarget : notnull
-        => Build(map, map.Source, args);
-
-    /// <summary>
-    /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
-    /// </summary>
-    /// <typeparam name="TSource">The source type mapped from.</typeparam>
-    /// <typeparam name="TTarget">The target type mapped to.</typeparam>
-    /// <param name="map">The Map used to build.</param>
-    /// <param name="source">The source used during the mapping.</param>
-    /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
-    /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source) where TSource : notnull where TTarget : notnull
+    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source)
+        where TSource : notnull where TTarget : notnull
     {
         willNotThrowExceptions = map.WillNotThrowExceptions;
-        isIgnoringCase = map.IgnoringCase;
+        ignoreCase = map.IgnoreCase;
         var target = typeFormatter.GetInstance<TTarget>();
         Copy(map, source, target);
         return target;
@@ -85,7 +64,7 @@ public class MapBuilder
     public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, Func<object[]> args) where TSource : notnull where TTarget : notnull
     {
         willNotThrowExceptions = map.WillNotThrowExceptions;
-        isIgnoringCase = map.IgnoringCase;
+        ignoreCase = map.IgnoreCase;
         var target = typeFormatter.GetInstance<TTarget>(args);
         Copy(map, source, target);
         return target;
@@ -93,7 +72,7 @@ public class MapBuilder
 
     private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
     {
-        var skipProperties = map.MapConfiguration.Skips.Select(x => x.GetMemberName()).ToList();
+        var skipProperties = map.Skips.Select(x => x.GetMemberName()).ToList();
         var sourcePropertyInfos = source.GetType().GetProperties().ToList();
         var targetPropertyInfos = typeof(TTarget).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var joinedPropertyInfos = GetSourceResultProperties(sourcePropertyInfos, targetPropertyInfos);
@@ -189,12 +168,12 @@ public class MapBuilder
     {
         foreach (var (sourcePropertyMapName, resultPropertyMapName) in map.PropertyNameMaps)
         {
-            var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
+            var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => ignoreCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
             if (sourcePropertyInfo == null) continue;
-            var resultPropertyInfo = resultProperties.FirstOrDefault(x => isIgnoringCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
+            var resultPropertyInfo = resultProperties.FirstOrDefault(x => ignoreCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
             if (resultPropertyInfo == null) continue;
             if (joinedPropertyInfos.Any(x =>
-                isIgnoringCase
+                ignoreCase
                 ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant()
                 : x.sourcePropertyInfo.Name == sourcePropertyMapName && x.resultPropertyInfo.Name == resultPropertyMapName))
 
@@ -214,8 +193,8 @@ public class MapBuilder
     private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultProperties(List<PropertyInfo> sourceProperties, List<PropertyInfo> targetProperties)
     {
         return sourceProperties.Join(targetProperties,
-            sourceProperty => isIgnoringCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
-            resultProperty => isIgnoringCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
+            sourceProperty => ignoreCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
+            resultProperty => ignoreCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
             (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
             .ToList();
     }
