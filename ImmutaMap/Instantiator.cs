@@ -18,7 +18,7 @@ public static class Instantiator
         var map = new Map<T, T>();
         mapAction.Invoke(map);
 
-        foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+        foreach (var (Name, Value) in properties) map.Mappings.Add(new DynamicMapping(Value.GetType(), Name, () => Value));
         return MapBuilder.GetNewInstance().Build(map, target);
     }
 
@@ -27,7 +27,7 @@ public static class Instantiator
         var target = new TypeFormatter().GetInstance<T>();
         var properties = new List<(string Name, object Value)>();
         var map = new Map<T, T>();
-        foreach (var (Name, Value) in properties) map.AddMapping(new DynamicMapping(Value.GetType(), Name, () => Value));
+        foreach (var (Name, Value) in properties) map.Mappings.Add(new DynamicMapping(Value.GetType(), Name, () => Value));
         return MapBuilder.GetNewInstance().Build(map, target);
     }
 }

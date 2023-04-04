@@ -1,13 +1,13 @@
 ﻿using ImmutaMap.Exceptions;
 using ImmutaMap.Interfaces;
 using ImmutaMap.Utilities;
-using System.IO.MemoryMappedFiles;
 using System.Reflection;
 
 namespace ImmutaMap;
 
 public class MapBuilder
 {
+    private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private readonly ITypeFormatter typeFormatter;
     private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
     private bool ignoreCase = false;
@@ -72,9 +72,9 @@ public class MapBuilder
 
     private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
     {
-        var skipProperties = map.Skips.Select(x => x.GetMemberName()).ToList();
-        var sourcePropertyInfos = source.GetType().GetProperties().ToList();
-        var targetPropertyInfos = typeof(TTarget).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(x => !skipProperties.Contains(x.Name)).ToList();
+        var skipProperties = map.Skips.Select(x => x.GetMemberName()).ToHashSet();
+        var sourcePropertyInfos = source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
+        var targetPropertyInfos = typeof(TTarget).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var joinedPropertyInfos = GetSourceResultProperties(sourcePropertyInfos, targetPropertyInfos);
         AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 

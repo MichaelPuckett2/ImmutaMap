@@ -5,15 +5,16 @@ using System.Reflection;
 namespace ImmutaMap.Mappings;
 
 /// <inheritdoc />
-public class PropertyMapping<TSourcePropertyType> : IMapping
+public class PropertyMapping<TSourcePropertyType, TTargetPropertyType> : IMapping
+    where TSourcePropertyType : notnull where TTargetPropertyType : notnull
 {
     private readonly (string Name, Type type) key;
-    private readonly Func<object, object> func;
+    private readonly Func<TSourcePropertyType, TTargetPropertyType> func;
 
-    public PropertyMapping(string name, Func<TSourcePropertyType, object> propertyResultFunc)
+    public PropertyMapping(string name, Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
     {
         key = (name, typeof(TSourcePropertyType));
-        func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke((TSourcePropertyType)sourceValue));
+        func = new Func<TSourcePropertyType, TTargetPropertyType>(propertyResultFunc.Invoke);
     }
 
     /// <inheritdoc />
@@ -22,7 +23,7 @@ public class PropertyMapping<TSourcePropertyType> : IMapping
         var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
         if (key == propertyMapFuncsKey)
         {
-            var targetValue = func?.Invoke(sourcePropertyInfo.GetValue(source)!)!;
+            TTargetPropertyType targetValue = func.Invoke((TSourcePropertyType)sourcePropertyInfo.GetValue(source)!)!;
             if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
                 throw new BuildException(targetValue.GetType(), targetPropertyInfo);
@@ -43,7 +44,7 @@ public class PropertyMapping<TSourcePropertyType> : IMapping
         var propertyMapFuncsKey = (sourcePropertyInfo.Name, sourcePropertyInfo.PropertyType);
         if (key == propertyMapFuncsKey)
         {
-            var targetValue = func?.Invoke(previouslyMappedValue)!;
+            var targetValue = func.Invoke((TSourcePropertyType)previouslyMappedValue)!;
             if (!targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
             {
                 throw new BuildException(targetValue.GetType(), targetPropertyInfo);
