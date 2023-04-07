@@ -1,7 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+
 namespace ImmutaMap.Test;
 
-    [TestClass]
-    public class MapTests
+[TestClass]
+public class MapTests
 {
     [TestMethod]
     public void TestWithMapping()
@@ -207,5 +210,18 @@ namespace ImmutaMap.Test;
         Assert.AreEqual(ExpectedFirstName, actor.FirstName);
         Assert.AreEqual(ExpectedLastName, actor.LastName);
         Assert.AreEqual(personClass.Age, actor.Age);
+    }
+
+    [TestMethod]
+    public void TestAttributeScanningExtension()
+    {
+        //Arrange
+        var serviceCollection = new Mock<IServiceCollection>().Object;
+
+        //Act
+        serviceCollection.UseImmutaMap();
+
+        //Assert
+
     }
 }

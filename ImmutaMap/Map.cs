@@ -7,7 +7,7 @@ namespace ImmutaMap;
 /// <summary>
 /// Configurations used for mapping.
 /// </summary>
-public class Map<TSource, TTarget> : IMap<TSource, TTarget> 
+public class Map<TSource, TTarget> : IMap<TSource, TTarget>
     where TSource : notnull where TTarget : notnull
 {
     internal List<IMapping> Mappings { get; } = new();
@@ -122,4 +122,6 @@ public class Map<TSource, TTarget> : IMap<TSource, TTarget>
     /// Static empty Map.
     /// </summary>
     public static Map<TSource, TTarget> Empty { get; } = new Map<TSource, TTarget>();
+
+    internal static Map<TSource, TTarget> CachedMap { get; set; } = Empty;
 }

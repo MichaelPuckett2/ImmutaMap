@@ -1,5 +1,8 @@
-﻿using ImmutaMap.Mappings;
+﻿using ImmutaMap.Exceptions;
+using ImmutaMap.Mappings;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace ImmutaMap;
 
@@ -84,6 +87,7 @@ public static class Extensions
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
     public static T As<T>(this object obj) where T : notnull
     {
+        var map = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<Map<object, T>>();
         return MapBuilder.GetNewInstance().Build(Map<object, T>.Empty, obj);
     }
 
@@ -158,5 +162,108 @@ public static class Extensions
         var map = new Map<TSource, TTarget>();
         mapAction.Invoke(map);
         return new Mapper<TSource, TTarget>(source, map);
+    }
+}
+
+public static class ScanExtensions
+{
+    /// <summary>
+    /// Scans the calling assembly and injects specks into the IServiceCollection.
+    /// </summary>
+    /// <param name="serviceCollection">The IServiceCollection in use.</param>
+    /// <param name="assemblies">The assemblies to scan.</param>
+    /// <returns>The same IServiceCollection in use.</returns>
+    public static IServiceCollection AddImmutaMaps(this IServiceCollection serviceCollection)
+    {
+        Assembly.GetCallingAssembly()
+            .GetTypes()
+            .ExecuteMapping(type => ScanTypeAndInjectMappings(serviceCollection, type));
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Scans the requested assemblies and injects specks into the IServiceCollection.
+    /// </summary>
+    /// <param name="serviceCollection">The IServiceCollection in use.</param>
+    /// <param name="assemblies">The assemblies to scan.</param>
+    /// <returns>The same IServiceCollection in use.</returns>
+    public static IServiceCollection AddImmutaMaps(this IServiceCollection serviceCollection, IEnumerable<Assembly> assemblies)
+    {
+        assemblies
+            .SelectMany(x => x.GetTypes())
+            .ExecuteMapping(type => ScanTypeAndInjectMappings(serviceCollection, type));
+        return serviceCollection;
+    }
+
+    internal static IServiceCollection WithTypesAs<T>(this IServiceCollection serviceCollection, Type type, Action<T> action) where T : Attribute
+    {
+        var attributes = type.GetCustomAttributes().OfType<T>();
+        foreach (var attribute in attributes) action.Invoke(attribute);
+        return serviceCollection;
+    }
+
+    internal static void ExecuteMapping<T>(this IEnumerable<T> enumerable, Action<T> action) where T : Type
+    {
+        foreach (var item in enumerable) action.Invoke(item);
+    }
+
+    internal static void ScanTypeAndInjectMappings(IServiceCollection serviceCollection, Type type)
+    {
+        serviceCollection.WithTypesAs<MapAttribute>(type, x => serviceCollection.AddSingleton(type));
+
+        if (type.IsInterface)
+        {
+            serviceCollection.WithTypesAs(type, (Action<MapAttribute>)(mapAttribute =>
+            {
+                ScanPropertiesAndInject(serviceCollection, type);
+                ScanFieldsAndInject(serviceCollection, type);
+                ScanMethodsAndInject(serviceCollection, type);
+            }));
+        }
+    }
+
+    private static void ScanMethodsAndInject(IServiceCollection serviceCollection, Type type)
+    {
+        type.GetMethods().Where(x => x.ReturnType != typeof(void)).ToList().ForEach(methodInfo =>
+        {
+            methodInfo.GetCustomAttributes<MapAttribute>().ToList().ForEach(mapAttribute =>
+            {
+                _ = mapAttribute switch
+                {
+                    MapAttribute singletonAttribute => serviceCollection.AddSingleton(methodInfo.ReturnType),
+                    _ => throw new ImmutaMapAttributeUnknownException(mapAttribute.GetType())
+                };
+            });
+        });
+    }
+
+    private static void ScanFieldsAndInject(IServiceCollection serviceCollection, Type type)
+    {
+        type.GetFields().ToList().ForEach(fieldInfo =>
+        {
+            fieldInfo.GetCustomAttributes<MapAttribute>().ToList().ForEach(mapAttribute =>
+            {
+                _ = mapAttribute switch
+                {
+                    MapAttribute singletonAttribute => serviceCollection.AddSingleton(fieldInfo.FieldType),
+                    _ => throw new ImmutaMapAttributeUnknownException(mapAttribute.GetType())
+                };
+            });
+        });
+    }
+
+    private static void ScanPropertiesAndInject(IServiceCollection serviceCollection, Type type)
+    {
+        type.GetProperties().ToList().ForEach(propertyInfo =>
+        {
+            propertyInfo.GetCustomAttributes<MapAttribute>().ToList().ForEach(mapAttribute =>
+            {
+                _ = mapAttribute switch
+                {
+                    MapAttribute singletonAttribute => serviceCollection.AddSingleton(propertyInfo.PropertyType),
+                    _ => throw new ImmutaMapAttributeUnknownException(mapAttribute.GetType())
+                };
+            });
+        });
     }
 }
