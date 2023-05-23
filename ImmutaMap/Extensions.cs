@@ -102,29 +102,20 @@ public static class Extensions
 
     internal static string GetMemberName(this Expression expression)
     {
-        var result = expression switch
-        {
-            MemberExpression memberExpression => memberExpression.Member.Name,
-            MethodCallExpression methodCallExpression => methodCallExpression.Method.Name,
-            UnaryExpression unaryExpression => unaryExpression.Operand switch
-            {
-                MethodCallExpression methodCallExpression => methodCallExpression.Method.Name,
-                _ => ((MemberExpression)unaryExpression.Operand).Member.Name
-            },
-            _ => string.Empty
-        };
+        string result;
+        var lambda = (LambdaExpression)expression;
 
-        if (result == string.Empty)
+        MemberExpression memberExpression;
+        if (lambda.Body is UnaryExpression unaryExpression)
         {
-            try
-            {
-                result = ((dynamic)expression).Body.Member.Name;
-            }
-            catch
-            {
-                throw new ArgumentException(null, nameof(expression));
-            }
+            memberExpression = (MemberExpression)unaryExpression.Operand;
         }
+        else
+        {
+            memberExpression = (MemberExpression)lambda.Body;
+        }
+
+        result = memberExpression.Member.Name;
 
         return result;
     }
