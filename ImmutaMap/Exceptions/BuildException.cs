@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace ImmutaMap.Exceptions;
+﻿namespace ImmutaMap.Exceptions;
 
 public class BuildException : Exception
 {

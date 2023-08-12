@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace ImmutaMap.Interfaces;
+﻿namespace ImmutaMap.Interfaces;
 
 /// <summary>
 /// Used for mapping specific details about properties.

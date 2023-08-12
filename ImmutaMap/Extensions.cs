@@ -1,7 +1,4 @@
-﻿using ImmutaMap.Mappings;
-using System.Linq.Expressions;
-
-namespace ImmutaMap;
+﻿namespace ImmutaMap;
 
 public static class Extensions
 {
@@ -98,26 +95,6 @@ public static class Extensions
         where TSource : notnull where TTarget : notnull
     {
         return source.BeginMap(mapAction).Build();
-    }
-
-    internal static string GetMemberName(this Expression expression)
-    {
-        string result;
-        var lambda = (LambdaExpression)expression;
-
-        MemberExpression memberExpression;
-        if (lambda.Body is UnaryExpression unaryExpression)
-        {
-            memberExpression = (MemberExpression)unaryExpression.Operand;
-        }
-        else
-        {
-            memberExpression = (MemberExpression)lambda.Body;
-        }
-
-        result = memberExpression.Member.Name;
-
-        return result;
     }
 
     /// <summary>

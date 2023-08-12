@@ -1,7 +1,4 @@
-﻿using ImmutaMap.Interfaces;
-using System.Linq.Expressions;
-
-namespace ImmutaMap
+﻿namespace ImmutaMap
 {
     public interface IMap<TSource, TTarget>
         where TSource : notnull

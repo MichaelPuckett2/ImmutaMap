@@ -1,8 +1,4 @@
-﻿using ImmutaMap.Exceptions;
-using ImmutaMap.Interfaces;
-using System.Reflection;
-
-namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Mappings;
 
 /// <inheritdoc />
 public class PropertyMapping<TSourcePropertyType, TTargetPropertyType> : IMapping

@@ -1,7 +1,4 @@
-﻿using ImmutaMap.Interfaces;
-using System.Runtime.Serialization;
-
-namespace ImmutaMap.Utilities;
+﻿namespace ImmutaMap.Utilities;
 
 /// <summary>
 /// Can get an instance of T using the default empty constructor

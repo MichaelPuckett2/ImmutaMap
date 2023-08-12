@@ -1,7 +1,4 @@
-﻿using ImmutaMap.Interfaces;
-using System.Reflection;
-
-namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Mappings;
 
 /// <inheritdoc />
 public class SourceAttributeMapping<TAttribute> : IMapping where TAttribute : Attribute

@@ -1,6 +1,4 @@
-﻿using ImmutaMap.Interfaces;
-using ImmutaMap.Mappings;
-using System.Linq.Expressions;
+﻿using TripleG3.ExpressionExtensions;
 
 namespace ImmutaMap;
 
