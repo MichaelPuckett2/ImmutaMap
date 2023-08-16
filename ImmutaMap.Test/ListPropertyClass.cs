@@ -1,8 +1,8 @@
 ﻿namespace ImmutaMap.Test;
 
-public class ListPropertyClass
+public class ListItems
 {
-    public ListPropertyClass(List<string> items)
+    public ListItems(List<string> items)
     {
         Items = items;
     }

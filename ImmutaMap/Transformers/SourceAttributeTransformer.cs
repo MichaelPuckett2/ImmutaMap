@@ -1,11 +1,11 @@
-﻿namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Transformers;
 
 /// <inheritdoc />
-public class SourceAttributeMapping<TAttribute> : IMapping where TAttribute : Attribute
+public class SourceAttributeTransformer<TAttribute> : ITransformer where TAttribute : Attribute
 {
     private readonly Func<Attribute, object, object> func;
 
-    public SourceAttributeMapping(Func<Attribute, object, object> func)
+    public SourceAttributeTransformer(Func<Attribute, object, object> func)
     {
         this.func = func;
     }

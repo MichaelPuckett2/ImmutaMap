@@ -1,12 +1,12 @@
-﻿namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Transformers;
 
 /// <inheritdoc />
-public class SourceTypeMapping : IMapping
+public class SourceTypeTransformer : ITransformer
 {
     private readonly Type type;
     private readonly Func<object, object> typeMapFunc;
 
-    public SourceTypeMapping(Type type, Func<object, object> typeMapFunc)
+    public SourceTypeTransformer(Type type, Func<object, object> typeMapFunc)
     {
         this.type = type;
         this.typeMapFunc = typeMapFunc;

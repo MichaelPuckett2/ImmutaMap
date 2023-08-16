@@ -1,8 +1,6 @@
-﻿using System.Reflection;
+﻿namespace ImmutaMap.Transformers;
 
-namespace ImmutaMap.Test;
-
-public class UpperCaseMap : Interfaces.IMapping
+public class UpperCaseTransformer : ITransformer
 {
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
     {

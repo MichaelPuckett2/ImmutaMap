@@ -1,8 +1,8 @@
 ﻿namespace ImmutaMap.Test;
 
-public class DictionaryPropertyClass
+public class DictionaryItems
 {
-    public DictionaryPropertyClass(Dictionary<int, string> items)
+    public DictionaryItems(Dictionary<int, string> items)
     {
         Items = items;
     }

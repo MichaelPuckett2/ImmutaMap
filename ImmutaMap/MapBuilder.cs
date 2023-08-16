@@ -5,14 +5,12 @@ public class MapBuilder
     private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private readonly ITypeFormatter typeFormatter;
     private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
-    private bool ignoreCase = false;
-    private bool willNotThrowExceptions = true;
 
     /// <summary>
     /// Initializes the Mapper with an ITypeFormatter.
     /// </summary>
     /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
-    public MapBuilder(ITypeFormatter typeFormatter)
+    MapBuilder(ITypeFormatter typeFormatter)
     {
         this.typeFormatter = typeFormatter;
     }
@@ -21,7 +19,7 @@ public class MapBuilder
     /// A simpler instantiation that allows for quick fluent designing.
     /// </summary>
     /// <returns>A new Mapper used to map and instantiate the maps target.</returns>
-    public static MapBuilder GetNewInstance() => new(new TypeFormatter());
+    public static MapBuilder GetNewInstance() => new(ITypeFormatter.Default);
 
     /// <summary>
     /// A simpler instantiation that allows for quick fluent designing.
@@ -37,13 +35,11 @@ public class MapBuilder
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
     /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source)
+    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source)
         where TSource : notnull where TTarget : notnull
     {
-        willNotThrowExceptions = map.WillNotThrowExceptions;
-        ignoreCase = map.IgnoreCase;
         var target = typeFormatter.GetInstance<TTarget>();
-        Copy(map, source, target);
+        Copy(configuration, source, target);
         return target;
     }
 
@@ -52,31 +48,29 @@ public class MapBuilder
     /// </summary>
     /// <typeparam name="TSource">The source type mapped from.</typeparam>
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
-    /// <param name="map">The Map used to build.</param>
+    /// <param name="configuration">The Map used to build.</param>
     /// <param name="source">The source used during the mapping.</param>
     /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, Func<object[]> args) where TSource : notnull where TTarget : notnull
+    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> args) where TSource : notnull where TTarget : notnull
     {
-        willNotThrowExceptions = map.WillNotThrowExceptions;
-        ignoreCase = map.IgnoreCase;
         var target = typeFormatter.GetInstance<TTarget>(args);
-        Copy(map, source, target);
+        Copy(configuration, source, target);
         return target;
     }
 
-    private void Copy<TSource, TTarget>(Map<TSource, TTarget> map, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
+    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
     {
-        var skipProperties = map.Skips.Select(x => x.GetMemberName()).ToHashSet();
+        var skipProperties = configuration.Skips.Select(x => x.GetMemberName()).ToHashSet();
         var sourcePropertyInfos = source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var targetPropertyInfos = typeof(TTarget).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
-        var joinedPropertyInfos = GetSourceResultProperties(sourcePropertyInfos, targetPropertyInfos);
-        AddPropertyNameMaps(map, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
+        var joinedPropertyInfos = GetSourceResultProperties<TSource, TTarget>(sourcePropertyInfos, targetPropertyInfos, configuration);
+        AddPropertyNameMaps(configuration, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 
         foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
         {
             var mappingFound = false;
-            foreach (var mapping in map.Mappings)
+            foreach (var mapping in configuration.Transformers)
             {
                 var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
                     ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
@@ -87,7 +81,7 @@ public class MapBuilder
                     if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result);
+                        SetTargetValue(target, targetPropertyInfo, result, configuration);
                         mappingFound = true;
                     }
                 }
@@ -96,7 +90,7 @@ public class MapBuilder
                     if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result);
+                        SetTargetValue(target, targetPropertyInfo, result, configuration);
                         mappingFound = true;
                     }
                 }
@@ -109,7 +103,7 @@ public class MapBuilder
 
                 if (previouslyMappedValue != default)
                 {
-                    SetTargetValue(target, targetPropertyInfo, previouslyMappedValue);
+                    SetTargetValue(target, targetPropertyInfo, previouslyMappedValue, configuration);
                 }
                 else
                 {
@@ -118,23 +112,24 @@ public class MapBuilder
                     && sourcePropertyInfo.PropertyType == typeof(TSource)
                     && targetPropertyInfo.PropertyType == typeof(TTarget))
                     {
-                        targetValue = GetNewInstance().Build(map, source);
+                        targetValue = GetNewInstance().Build(configuration, source);
                     }
                     else
                     {
                         targetValue = sourcePropertyInfo.GetValue(source)!;
                     }
-                    SetTargetValue(target, targetPropertyInfo, targetValue);
+                    SetTargetValue(target, targetPropertyInfo, targetValue, configuration);
                 }
             }
         }
     }
 
-    private void SetTargetValue<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue)
+    private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
+        where TSource : notnull where TTarget : notnull
     {
         if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
         {
-            if (willNotThrowExceptions)
+            if (configuration.WillNotThrowExceptions)
                 return;
             else
                 throw new BuildException(targetValue.GetType(), targetPropertyInfo);
@@ -158,17 +153,17 @@ public class MapBuilder
         mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
 
-    private void AddPropertyNameMaps<TSource, TResult>(Map<TSource, TResult> map, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
+    private void AddPropertyNameMaps<TSource, TResult>(IConfiguration<TSource, TResult> configuration, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
         where TSource : notnull where TResult : notnull
     {
-        foreach (var (sourcePropertyMapName, resultPropertyMapName) in map.PropertyNameMaps)
+        foreach (var (sourcePropertyMapName, resultPropertyMapName) in configuration.PropertyNameMaps)
         {
-            var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => ignoreCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
+            var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => configuration.IgnoreCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
             if (sourcePropertyInfo == null) continue;
-            var resultPropertyInfo = resultProperties.FirstOrDefault(x => ignoreCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
+            var resultPropertyInfo = resultProperties.FirstOrDefault(x => configuration.IgnoreCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
             if (resultPropertyInfo == null) continue;
             if (joinedPropertyInfos.Any(x =>
-                ignoreCase
+                configuration.IgnoreCase
                 ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant()
                 : x.sourcePropertyInfo.Name == sourcePropertyMapName && x.resultPropertyInfo.Name == resultPropertyMapName))
 
@@ -185,11 +180,15 @@ public class MapBuilder
         }
     }
 
-    private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> GetSourceResultProperties(List<PropertyInfo> sourceProperties, List<PropertyInfo> targetProperties)
+    private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> 
+        GetSourceResultProperties<TSource, TTarget>(List<PropertyInfo> sourceProperties,
+                                                    List<PropertyInfo> targetProperties,
+                                                    IConfiguration<TSource, TTarget> configuration)
+        where TSource : notnull where TTarget : notnull
     {
         return sourceProperties.Join(targetProperties,
-            sourceProperty => ignoreCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
-            resultProperty => ignoreCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
+            sourceProperty => configuration.IgnoreCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
+            resultProperty => configuration.IgnoreCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
             (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
             .ToList();
     }

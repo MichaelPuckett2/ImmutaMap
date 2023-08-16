@@ -1,11 +1,11 @@
-﻿namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Transformers;
 
 /// <inheritdoc />
-public class TargetAttributeMapping<TAttribute> : IMapping where TAttribute : Attribute
+public class TargetAttributeTransformer<TAttribute> : ITransformer where TAttribute : Attribute
 {
     private readonly Func<Attribute, object, object> func;
 
-    public TargetAttributeMapping(Func<Attribute, object, object> func)
+    public TargetAttributeTransformer(Func<Attribute, object, object> func)
     {
         this.func = func;
     }

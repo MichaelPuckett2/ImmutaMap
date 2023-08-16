@@ -1,7 +1,9 @@
+using ImmutaMap.Transformers;
+
 namespace ImmutaMap.Test;
 
-    [TestClass]
-    public class MapTests
+[TestClass]
+public class MapTests
 {
     [TestMethod]
     public void TestWithMapping()
@@ -11,7 +13,23 @@ namespace ImmutaMap.Test;
         const string ExpectedFirstName = "FirstMock2";
 
         //Act
-        var actor = personClass.With(x => x.FirstName, firstName => ExpectedFirstName);
+        var actor = personClass.With(x => x.FirstName, ExpectedFirstName);
+
+        //Assert
+        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
+        Assert.AreEqual(personClass.LastName, actor.LastName);
+        Assert.AreEqual(personClass.Age, actor.Age);
+    }
+
+    [TestMethod]
+    public void TestWithPropertyValueMapping()
+    {
+        //Arrange
+        var personClass = new PersonClass("FirstMock", "LastMock1", 50);
+        const string ExpectedFirstName = "FirstMock1";
+
+        //Act
+        var actor = personClass.With(x => x.FirstName, firstName => $"{firstName}1");
 
         //Assert
         Assert.AreEqual(ExpectedFirstName, actor.FirstName);
@@ -80,7 +98,7 @@ namespace ImmutaMap.Test;
         var actor = personRecord
             .As<PersonRecord, PersonClass>(map =>
             {
-                map.MapSourceAttribute<FirstNameAttribute>((attribute, value) => attribute.RealName);
+                map.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -98,9 +116,9 @@ namespace ImmutaMap.Test;
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClass>(map =>
+            .As<PersonRecord, PersonClass>(config =>
             {
-                map.MapTargetAttribute<FirstNameAttribute>((attribute, value) => attribute.RealName);
+                config.MapTargetAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -119,7 +137,7 @@ namespace ImmutaMap.Test;
         //Act
         var actor = personRecord.As<PersonRecord, PersonClass>(map =>
         {
-            map.MapTargetAttribute<TrimAttribute>((attribute, value) => value is string str ? str.Trim() : value);
+            map.MapTargetAttribute<PersonRecord, PersonClass, TrimAttribute>((attribute, value) => value is string str ? str.Trim() : value);
         });
 
         //Assert
@@ -132,7 +150,7 @@ namespace ImmutaMap.Test;
     public void TestPropertyTypeMapping()
     {
         //Arrange
-        var listPropertyClass = new ListPropertyClass(new() { "Mock1", "Mock2" });
+        var listItems = new ListItems(new() { "Mock1", "Mock2" });
         var expectedValue = new Dictionary<int, string>
         {
             [1] = "Mock1",
@@ -140,8 +158,8 @@ namespace ImmutaMap.Test;
         };
 
         //Act
-        var actor = listPropertyClass
-            .As<ListPropertyClass, DictionaryPropertyClass>(map =>
+        var actor = listItems
+            .As<ListItems, DictionaryItems>(map =>
             {
                 map.MapPropertyType(x => x.Items, items =>
                 {
@@ -167,7 +185,8 @@ namespace ImmutaMap.Test;
         const string ExpectedValue = "FirstMock1 LastMock1";
 
         //Act
-        var actor = person.As<EmployeeRecord>()
+        var actor = person
+            .As<EmployeeRecord>()
             .With(x => x.FullName, fullName => $"{person.FirstName} {person.LastName}");
 
         //Assert
@@ -175,14 +194,15 @@ namespace ImmutaMap.Test;
     }
 
     [TestMethod]
-    public void TestAsAndDynamicMapping()
+    public void TestAsAndWithDynamicMapping()
     {
         //Arrange
         var person = new PersonClass("FirstMock1", "LastMock1", 50);
         const string ExpectedValue = "FirstMock1 LastMock1";
 
         //Act
-        var actor = person.As<EmployeeRecord>()
+        var actor = person
+            .As<EmployeeRecord>()
             .With(new { FullName = $"{person.FirstName} {person.LastName}" });
 
         //Assert
@@ -198,14 +218,49 @@ namespace ImmutaMap.Test;
         const string ExpectedLastName = "LASTMOCK1";
 
         //Act
-        var actor = personClass.As<PersonClass, PersonRecord>(map =>
+        var actor = personClass.As<PersonClass, PersonRecord>(config =>
         {
-            map.MapCustom(new UpperCaseMap());
+            config.Transformers.Add(new UpperCaseTransformer());
         });
 
         //Assert
         Assert.AreEqual(ExpectedFirstName, actor.FirstName);
         Assert.AreEqual(ExpectedLastName, actor.LastName);
+        Assert.AreEqual(personClass.Age, actor.Age);
+    }
+
+    [TestMethod]
+    public void TestAsAnonymous()
+    {
+        //Arrange
+        var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
+        const string ExpectedFirstName = "FirstMock1";
+
+        //Act
+        var actor = personClass.AsDynamic();
+
+        //Assert
+        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
+        Assert.AreEqual(personClass.LastName, actor.LastName);
+        Assert.AreEqual(personClass.Age, actor.Age);
+    }
+
+    [TestMethod]
+    public void TestAsAnonymousMap()
+    {
+        //Arrange
+        var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
+        const string ExpectedFirstName = "FirstMock1";
+
+        //Act
+        var actor = personClass.AsDynamic(map =>
+        {
+            map.Skips.Add((x) => x.FirstName);
+        });
+
+        //Assert
+        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
+        Assert.AreEqual(personClass.LastName, actor.LastName);
         Assert.AreEqual(personClass.Age, actor.Age);
     }
 }

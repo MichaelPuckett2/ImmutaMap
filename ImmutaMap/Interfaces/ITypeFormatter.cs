@@ -19,4 +19,6 @@ public interface ITypeFormatter
     /// <param name="args">Arguments used for initializing.</param>
     /// <returns>Initialized T</returns>
     T GetInstance<T>(Func<object[]> args);
+
+    static ITypeFormatter Default { get; } = new TypeFormatter();
 }

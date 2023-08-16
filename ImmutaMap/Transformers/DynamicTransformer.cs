@@ -1,12 +1,12 @@
-﻿namespace ImmutaMap.Mappings;
+﻿namespace ImmutaMap.Transformers;
 
-public class DynamicMapping : IMapping
+public class DynamicTransformer : ITransformer
 {
     private readonly Type type;
     private readonly (string propertyName, Type type) key;
     private readonly Func<object, object> func;
 
-    public DynamicMapping(Type type, string propertyName, Func<object> propertyResultFunc)
+    public DynamicTransformer(Type type, string propertyName, Func<object> propertyResultFunc)
     {
         key = (propertyName, type);
         func = new Func<object, object>(sourceValue => propertyResultFunc.Invoke());
