@@ -76,9 +76,9 @@ public class MapTests
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClassLastNameSpelledDifferent>(map =>
+            .As<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
             {
-                map.MapProperty(x => x.LastName, x => x.Last_Name);
+                config.MapProperty(x => x.LastName, x => x.Last_Name);
             });
 
         //Assert
@@ -96,9 +96,9 @@ public class MapTests
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClass>(map =>
+            .As<PersonRecord, PersonClass>(config =>
             {
-                map.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
+                config.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -159,9 +159,9 @@ public class MapTests
 
         //Act
         var actor = listItems
-            .As<ListItems, DictionaryItems>(map =>
+            .As<ListItems, DictionaryItems>(config =>
             {
-                map.MapPropertyType(x => x.Items, items =>
+                config.MapPropertyType(x => x.Items, items =>
                 {
                     var dictionary = new Dictionary<int, string>();
                     var counter = 0;
@@ -220,7 +220,7 @@ public class MapTests
         //Act
         var actor = personClass.As<PersonClass, PersonRecord>(config =>
         {
-            config.Transformers.Add(new UpperCaseTransformer());
+            config.AddTransformer(new UpperCaseTransformer());
         });
 
         //Assert
@@ -253,9 +253,9 @@ public class MapTests
         const string ExpectedFirstName = "FirstMock1";
 
         //Act
-        var actor = personClass.AsDynamic(map =>
+        var actor = personClass.AsDynamic(config =>
         {
-            map.Skips.Add((x) => x.FirstName);
+            config.SkipProperty((x) => x.FirstName);
         });
 
         //Assert

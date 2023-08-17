@@ -59,18 +59,17 @@ public class MapBuilder
         return target;
     }
 
-    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
+    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget : notnull
     {
-        var skipProperties = configuration.Skips.Select(x => x.GetMemberName()).ToHashSet();
-        var sourcePropertyInfos = source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
-        var targetPropertyInfos = typeof(TTarget).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
-        var joinedPropertyInfos = GetSourceResultProperties<TSource, TTarget>(sourcePropertyInfos, targetPropertyInfos, configuration);
-        AddPropertyNameMaps(configuration, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
+        var props = typeof(TSource).GetProperties(PropertyBindingFlag).ToList();
+        var props2 = source.GetType().GetProperties(PropertyBindingFlag).ToList();
+        var (SourcePropertyInfos, TargetPropertyInfos) = IPropertyInfoRule<TSource, TTarget>.GetDefaultRule(source, target);
+        configuration.Rules.ToList().ForEach(x => x.Set(ref SourcePropertyInfos, ref TargetPropertyInfos));
 
-        foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
+        foreach (var (sourcePropertyInfo, targetPropertyInfo) in SourcePropertyInfos.EnumerateWith(TargetPropertyInfos))
         {
             var mappingFound = false;
-            foreach (var mapping in configuration.Transformers)
+            foreach (var transformer in configuration.Transformers)
             {
                 var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
                     ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
@@ -78,7 +77,7 @@ public class MapBuilder
 
                 if (mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                 {
-                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
+                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
                         SetTargetValue(target, targetPropertyInfo, result, configuration);
@@ -87,7 +86,7 @@ public class MapBuilder
                 }
                 else
                 {
-                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
+                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
                         SetTargetValue(target, targetPropertyInfo, result, configuration);
@@ -151,45 +150,5 @@ public class MapBuilder
         }
 
         mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
-    }
-
-    private void AddPropertyNameMaps<TSource, TResult>(IConfiguration<TSource, TResult> configuration, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
-        where TSource : notnull where TResult : notnull
-    {
-        foreach (var (sourcePropertyMapName, resultPropertyMapName) in configuration.PropertyNameMaps)
-        {
-            var sourcePropertyInfo = sourceProperties.FirstOrDefault(x => configuration.IgnoreCase ? x.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() : x.Name == sourcePropertyMapName);
-            if (sourcePropertyInfo == null) continue;
-            var resultPropertyInfo = resultProperties.FirstOrDefault(x => configuration.IgnoreCase ? x.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant() : x.Name == resultPropertyMapName);
-            if (resultPropertyInfo == null) continue;
-            if (joinedPropertyInfos.Any(x =>
-                configuration.IgnoreCase
-                ? x.sourcePropertyInfo.Name.ToLowerInvariant() == sourcePropertyMapName.ToLowerInvariant() && x.resultPropertyInfo.Name.ToLowerInvariant() == resultPropertyMapName.ToLowerInvariant()
-                : x.sourcePropertyInfo.Name == sourcePropertyMapName && x.resultPropertyInfo.Name == resultPropertyMapName))
-
-            {
-                continue;
-            }
-            var existingJoinedPropertyInfo = joinedPropertyInfos
-                .FirstOrDefault(x => x.sourcePropertyInfo.Name == sourcePropertyInfo.Name || x.resultPropertyInfo.Name == resultPropertyInfo.Name);
-            if (existingJoinedPropertyInfo != default)
-            {
-                joinedPropertyInfos.Remove(existingJoinedPropertyInfo);
-            }
-            joinedPropertyInfos.Add((sourcePropertyInfo, resultPropertyInfo));
-        }
-    }
-
-    private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> 
-        GetSourceResultProperties<TSource, TTarget>(List<PropertyInfo> sourceProperties,
-                                                    List<PropertyInfo> targetProperties,
-                                                    IConfiguration<TSource, TTarget> configuration)
-        where TSource : notnull where TTarget : notnull
-    {
-        return sourceProperties.Join(targetProperties,
-            sourceProperty => configuration.IgnoreCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
-            resultProperty => configuration.IgnoreCase ? resultProperty.Name.ToLowerInvariant() : resultProperty.Name,
-            (sourceProperty, resultProperty) => (sourceProperty, resultProperty))
-            .ToList();
     }
 }

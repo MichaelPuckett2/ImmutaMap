@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-namespace ImmutaMap;
+﻿namespace ImmutaMap;
 
 /// <summary>
 /// Configurations used for mapping.
@@ -8,20 +6,25 @@ namespace ImmutaMap;
 public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
     where TSource : notnull where TTarget : notnull
 {
-    public HashSet<(string SourcePropertyName, string TargetPropertyName)> PropertyNameMaps { get; } = new();
-    public HashSet<string> SkipPropertyNames { get; } = new();
+    private ImmutableList<ITransformer> transformers = ImmutableList.Create<ITransformer>();
+    private ImmutableList<IPropertyInfoRule<TSource, TTarget>> rules 
+        = ImmutableList.Create<IPropertyInfoRule<TSource, TTarget>>(SkipPropertyNamesRule<TSource, TTarget>.Instance,
+                                                                    JoinPropertyNamesRule<TSource, TTarget>.Instance,
+                                                                    MatchPropertyNameRule<TSource, TTarget>.Instance);
 
-    public ICollection<ITransformer> Transformers { get; } = new Collection<ITransformer>();
+    public IEnumerable<IPropertyInfoRule<TSource, TTarget>> Rules => rules;
+    public IEnumerable<ITransformer> Transformers => transformers;
 
-    /// <summary>
-    /// Properties that will skip mappingp.
-    /// </summary>
-    public IList<Expression<Func<TSource, TTarget>>> Skips { get; } = new List<Expression<Func<TSource, TTarget>>>();
+    public void AddTransformer(ITransformer transformer)
+    {
+        transformers = transformers.Add(transformer);
+    }
 
-    /// <summary>
-    /// When true mapping will ignore property casing.
-    /// </summary>
-    public bool IgnoreCase { get; set; }
+    public void AddRule(IPropertyInfoRule<TSource, TTarget> rule)
+    {
+        if (rules.Contains(rule)) return;
+        rules = rules.Add(rule);
+    }
 
     /// <summary>
     /// When true mapping will throw valid exceptions, otherwise they are silently handled and ignored.

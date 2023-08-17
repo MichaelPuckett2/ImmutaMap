@@ -4,10 +4,9 @@ public interface IConfiguration<TSource, TTarget>
     where TSource : notnull
     where TTarget : notnull
 {
-    bool IgnoreCase { get; set; }
-    HashSet<(string SourcePropertyName, string TargetPropertyName)> PropertyNameMaps { get; }
-    HashSet<string> SkipPropertyNames { get; }
-    IList<Expression<Func<TSource, TTarget>>> Skips { get; }
-    ICollection<ITransformer> Transformers { get; }
+    IEnumerable<ITransformer> Transformers { get; }
+    IEnumerable<IPropertyInfoRule<TSource, TTarget>> Rules { get; }
+    void AddTransformer(ITransformer transformer);
+    void AddRule(IPropertyInfoRule<TSource, TTarget> rule);
     bool WillNotThrowExceptions { get; set; }
 }
