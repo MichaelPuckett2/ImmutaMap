@@ -63,8 +63,6 @@ public class MapBuilder
     {
         var sourceProps = source.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
         var targetProps = target.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
-        //var (SourcePropertyInfos, TargetPropertyInfos) = IFilter<TSource, TTarget>.GetDefaultRule(source, target);
-
         var joined = sourceProps.Join(targetProps,
                                       sourceProp => (IgnoreHash<PropertyInfo>)sourceProp,
                                       targetProp => (IgnoreHash<PropertyInfo>)targetProp,
@@ -124,29 +122,28 @@ public class MapBuilder
     private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
         where TSource : notnull where TTarget : notnull
     {
-        if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
+        if (targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue?.GetType()) || targetValue == null)
         {
-            //if (configuration.WillNotThrowExceptions)
-            //    return;
-            //else
-                throw new BuildException(targetValue.GetType(), targetPropertyInfo);
-        }
+            if (targetPropertyInfo.CanWrite)
+            {
+                targetPropertyInfo.SetValue(target, targetValue);
+                mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+            }
+            else
+            {
+                var fields = typeof(TTarget).GetFields(PropertyBindingFlag);
+                var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
 
-        if (targetPropertyInfo.CanWrite)
-        {
-            targetPropertyInfo.SetValue(target, targetValue);
+                if (backingField != null)
+                {
+                    backingField.SetValue(target, targetValue);
+                    mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+                }
+            }
         }
         else
         {
-            var fields = typeof(TTarget).GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-            var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
-
-            if (backingField != null)
-            {
-                backingField.SetValue(target, targetValue);
-            }
+            throw new BuildException(targetValue.GetType(), targetPropertyInfo);
         }
-
-        mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
 }
