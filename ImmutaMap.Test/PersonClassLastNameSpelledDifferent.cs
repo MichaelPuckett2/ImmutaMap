@@ -1,14 +1,14 @@
 ﻿namespace ImmutaMap.Test
 {
-    public class PersonClassLastNameSpelledDifferent
+    public class PersonClassNamesSpelledDifferent
     {
-        public PersonClassLastNameSpelledDifferent(string firstName, string last_Name, int age)
+        public PersonClassNamesSpelledDifferent(string firstName, string last_Name, int age)
         {
-            FirstName = firstName;
+            First_Name = firstName;
             Last_Name = last_Name;
             Age = age;
         }
-        public string FirstName { get; }
+        public string First_Name { get; }
         public string Last_Name { get; }
         public int Age { get; }
         public static PersonClass Empty { get; } = new(string.Empty, string.Empty, int.MinValue);

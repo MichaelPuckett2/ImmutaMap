@@ -1,10 +1,10 @@
 ﻿namespace ImmutaMap.ProprtyInfoRules;
 
-public class IgnoreCaseRule<TSource, TTarget> : IPropertyInfoRule<TSource, TTarget> where TSource : notnull where TTarget : notnull
+public class IgnoreCaseFilter<TSource, TTarget> : IPropertiesFilter<TSource, TTarget> where TSource : notnull where TTarget : notnull
 {
-    IgnoreCaseRule() { }
-    public static IgnoreCaseRule<TSource, TTarget> Instance { get; } = new();
-    public void Set(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)
+    IgnoreCaseFilter() { }
+    public static IgnoreCaseFilter<TSource, TTarget> Instance { get; } = new();
+    public void Filter(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)
     {
         var joined = sourcePropertyInfos.Join(targetPropertyInfos,
             sourceProperty => sourceProperty.Name.ToLowerInvariant(),

@@ -3,6 +3,8 @@
 namespace ImmutaMap.Anonymous;
 public class AnonymousMapBuilder
 {
+    private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
     /// <summary>
     /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
     /// </summary>
@@ -21,9 +23,7 @@ public class AnonymousMapBuilder
         where TSource : notnull
     {
         dynamic target = new ExpandoObject();
-        var (SourcePropertyInfos, TargetPropertyInfos) = IPropertyInfoRule<TSource, object>.GetDefaultRule(source, (ExpandoObject)target);
-        map.Rules.ToList().ForEach(x => x.Set(ref SourcePropertyInfos, ref TargetPropertyInfos));
-        foreach (var propertyInfo in SourcePropertyInfos)
+        foreach (var propertyInfo in source.GetType().GetProperties(PropertyBindingFlag))
         {
             ((IDictionary<string, object?>)target).Add(propertyInfo.Name, propertyInfo.GetValue(source));
         }

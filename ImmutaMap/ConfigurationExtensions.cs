@@ -1,6 +1,4 @@
-﻿using ImmutaMap.ProprtyInfoRules;
-
-namespace ImmutaMap;
+﻿namespace ImmutaMap;
 
 public static class ConfigurationExtensions
 {
@@ -11,14 +9,13 @@ public static class ConfigurationExtensions
     /// <param name="sourceExpression">Expression to gain source property name.</param>
     /// <param name="targetExpression">Expression to gain target property name.</param>
     /// <returns>Current MapConfiguration.</returns>
-    public static IConfiguration<TSource, TTarget> MapProperty<TSource, TTarget, TResult>(
+    public static IConfiguration<TSource, TTarget> MapNames<TSource, TTarget, TResult>(
        this IConfiguration<TSource, TTarget> configuration,
        Expression<Func<TSource, TResult>> sourceExpression,
        Expression<Func<TTarget, TResult>> targetExpression)
        where TTarget : notnull where TSource : notnull
     {
-        MatchPropertyNameRule<TSource, TTarget>.Instance.PropertyNameMaps.Add((sourceExpression.GetMemberName(), targetExpression.GetMemberName()));
-        configuration.AddRule(MatchPropertyNameRule<TSource, TTarget>.Instance);
+        configuration.Comparers.Add(new G3EqualityComparer<PropertyInfo>((a, b) => a?.Name == sourceExpression.GetMemberName() && b?.Name == targetExpression.GetMemberName()));
         return configuration;
     }
 
@@ -36,7 +33,7 @@ public static class ConfigurationExtensions
        where TTarget : notnull where TSource : notnull
        where TSourcePropertyType : notnull where TTargetPropertyType : notnull
     {
-        configuration.AddTransformer(new PropertyTransformer<TSourcePropertyType, TTargetPropertyType>(sourceExpression.GetMemberName(), propertyResultFunc));
+        configuration.Transformers.Add(new PropertyTransformer<TSourcePropertyType, TTargetPropertyType>(sourceExpression.GetMemberName(), propertyResultFunc));
         return configuration;
     }
 
@@ -53,7 +50,7 @@ public static class ConfigurationExtensions
        where TAttribute : Attribute
     {
         var att = new SourceAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
-        configuration.AddTransformer(att);
+        configuration.Transformers.Add(att);
         return configuration;
     }
 
@@ -73,7 +70,7 @@ public static class ConfigurationExtensions
        where TAttribute : Attribute
     {
         var att = new TargetAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
-        configuration.AddTransformer(att);
+        configuration.Transformers.Add(att);
         return configuration;
     }
 
@@ -89,7 +86,7 @@ public static class ConfigurationExtensions
        where TTarget : notnull where TSource : notnull
     {
         var typeMapping = new SourceTypeTransformer(typeof(TType), typeMapFunc);
-        configuration.AddTransformer(typeMapping);
+        configuration.Transformers.Add(typeMapping);
         return configuration;
     }
 
@@ -101,7 +98,7 @@ public static class ConfigurationExtensions
        this IConfiguration<TSource, TTarget> configuration)
        where TTarget : notnull where TSource : notnull
     {
-        configuration.AddRule(IgnoreCaseRule<TSource, TTarget>.Instance);
+        configuration.Comparers.Add(new G3EqualityComparer<PropertyInfo>((a, b) => a?.Name.Equals(b?.Name, StringComparison.InvariantCultureIgnoreCase) ?? b is null));
         return configuration;
     }
 
@@ -113,8 +110,8 @@ public static class ConfigurationExtensions
        this IConfiguration<TSource, TTarget> configuration, Expression<Func<TSource, TTarget>> expression)
        where TTarget : notnull where TSource : notnull
     {
-        SkipPropertyNamesRule<TSource, TTarget>.Instance.Skips.Add(expression);
-        configuration.AddRule(SkipPropertyNamesRule<TSource, TTarget>.Instance);
+        SkipPropertyNamesFilter<TSource, TTarget>.Instance.Skips.Add(expression);
+        configuration.Filters.Add(SkipPropertyNamesFilter<TSource, TTarget>.Instance);
         return configuration;
     }
 }

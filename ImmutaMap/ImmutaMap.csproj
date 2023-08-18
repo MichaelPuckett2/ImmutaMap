@@ -38,7 +38,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-		<PackageReference Include="TripleG3.ExpressionExtensions" Version="7.0.0" />
+		<PackageReference Include="TripleG3.ExpressionExtensions" Version="7.0.2" />
 	</ItemGroup>
 
 </Project>

@@ -61,12 +61,18 @@ public class MapBuilder
 
     private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget : notnull
     {
-        var props = typeof(TSource).GetProperties(PropertyBindingFlag).ToList();
-        var props2 = source.GetType().GetProperties(PropertyBindingFlag).ToList();
-        var (SourcePropertyInfos, TargetPropertyInfos) = IPropertyInfoRule<TSource, TTarget>.GetDefaultRule(source, target);
-        configuration.Rules.ToList().ForEach(x => x.Set(ref SourcePropertyInfos, ref TargetPropertyInfos));
+        var sourceProps = source.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
+        var targetProps = target.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
+        //var (SourcePropertyInfos, TargetPropertyInfos) = IFilter<TSource, TTarget>.GetDefaultRule(source, target);
 
-        foreach (var (sourcePropertyInfo, targetPropertyInfo) in SourcePropertyInfos.EnumerateWith(TargetPropertyInfos))
+        var joined = sourceProps.Join(targetProps,
+                                      sourceProp => (IgnoreHash<PropertyInfo>)sourceProp,
+                                      targetProp => (IgnoreHash<PropertyInfo>)targetProp,
+                                      (SourcePropertyInfo, TargetPropertyInfo) => (SourcePropertyInfo, TargetPropertyInfo),
+                                      (a, b) => configuration.Comparers.Any(x => x.Equals(b, a)))
+                                      .ToList();
+
+        foreach (var (sourcePropertyInfo, targetPropertyInfo) in joined)
         {
             var mappingFound = false;
             foreach (var transformer in configuration.Transformers)
@@ -123,14 +129,29 @@ public class MapBuilder
         }
     }
 
+    int compareRunCount = 0;
+    int compareCount = 0;
+    private bool RunComparers<TSource, TTarget>(PropertyInfo a, PropertyInfo b, IConfiguration<TSource, TTarget> configuration)
+        where TSource : notnull where TTarget : notnull
+    {
+        compareRunCount++;
+        bool isMatch = false;
+        foreach (var comparer in configuration.Comparers)
+        {
+            compareCount++;
+            isMatch = comparer.Equals(a, b) || isMatch;
+        }
+        return isMatch;
+    }
+
     private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
         where TSource : notnull where TTarget : notnull
     {
         if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
         {
-            if (configuration.WillNotThrowExceptions)
-                return;
-            else
+            //if (configuration.WillNotThrowExceptions)
+            //    return;
+            //else
                 throw new BuildException(targetValue.GetType(), targetPropertyInfo);
         }
 
@@ -151,4 +172,13 @@ public class MapBuilder
 
         mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
+}
+
+public class IgnoreHash<T>
+{
+    IgnoreHash(T item) => Item = item;
+    public T Item { get; }
+    public override int GetHashCode() => 0;
+    public static implicit operator IgnoreHash<T>(T item) => new(item);
+    public static implicit operator T(IgnoreHash<T> ignoreHash) => ignoreHash.Item;
 }

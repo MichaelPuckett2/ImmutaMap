@@ -76,13 +76,14 @@ public class MapTests
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClassLastNameSpelledDifferent>(config =>
-            {
-                config.MapProperty(x => x.LastName, x => x.Last_Name);
+            .As<PersonRecord, PersonClassNamesSpelledDifferent>(config =>
+            {                
+                config.MapNames(x => x.FirstName, x => x.First_Name);
+                config.MapNames(x => x.LastName, x => x.Last_Name);
             });
 
         //Assert
-        Assert.AreEqual(personRecord.FirstName, actor.FirstName);
+        Assert.AreEqual(personRecord.FirstName, actor.First_Name);
         Assert.AreEqual(personRecord.LastName, actor.Last_Name);
         Assert.AreEqual(personRecord.Age, actor.Age);
     }
@@ -220,7 +221,7 @@ public class MapTests
         //Act
         var actor = personClass.As<PersonClass, PersonRecord>(config =>
         {
-            config.AddTransformer(new UpperCaseTransformer());
+            config.Transformers.Add(new UpperCaseTransformer());
         });
 
         //Assert
@@ -246,7 +247,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestAsAnonymousMap()
+    public void TestAsAnonymousSkipProperty()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
@@ -255,12 +256,30 @@ public class MapTests
         //Act
         var actor = personClass.AsDynamic(config =>
         {
-            config.SkipProperty((x) => x.FirstName);
+            config.SkipProperty(x => x.FirstName);
         });
 
         //Assert
         Assert.AreEqual(ExpectedFirstName, actor.FirstName);
         Assert.AreEqual(personClass.LastName, actor.LastName);
         Assert.AreEqual(personClass.Age, actor.Age);
+    }
+
+    [TestMethod]
+    public void TestIgnoreCase()
+    {
+        //Arrange
+        var personClass = new PersonRecord("FirstMock1", "LastMock1", 50);
+
+        //Act
+        var actor = personClass.As<PersonRecord, PersonLowerPropsRecord>(config =>
+        {
+            config.IgnoreCase();
+        });
+
+        //Assert
+        Assert.AreEqual(personClass.FirstName, actor.firstName);
+        Assert.AreEqual(personClass.LastName, actor.lastName);
+        Assert.AreEqual(personClass.Age, actor.age);
     }
 }

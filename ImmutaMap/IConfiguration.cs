@@ -4,9 +4,7 @@ public interface IConfiguration<TSource, TTarget>
     where TSource : notnull
     where TTarget : notnull
 {
-    IEnumerable<ITransformer> Transformers { get; }
-    IEnumerable<IPropertyInfoRule<TSource, TTarget>> Rules { get; }
-    void AddTransformer(ITransformer transformer);
-    void AddRule(IPropertyInfoRule<TSource, TTarget> rule);
-    bool WillNotThrowExceptions { get; set; }
+    IList<ITransformer> Transformers { get; }
+    IList<IPropertiesFilter<TSource, TTarget>> Filters { get; }
+    IList<G3EqualityComparer<PropertyInfo>> Comparers { get; }
 }

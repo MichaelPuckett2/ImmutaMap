@@ -6,25 +6,14 @@
 public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
     where TSource : notnull where TTarget : notnull
 {
-    private ImmutableList<ITransformer> transformers = ImmutableList.Create<ITransformer>();
-    private ImmutableList<IPropertyInfoRule<TSource, TTarget>> rules 
-        = ImmutableList.Create<IPropertyInfoRule<TSource, TTarget>>(SkipPropertyNamesRule<TSource, TTarget>.Instance,
-                                                                    JoinPropertyNamesRule<TSource, TTarget>.Instance,
-                                                                    MatchPropertyNameRule<TSource, TTarget>.Instance);
-
-    public IEnumerable<IPropertyInfoRule<TSource, TTarget>> Rules => rules;
-    public IEnumerable<ITransformer> Transformers => transformers;
-
-    public void AddTransformer(ITransformer transformer)
+    public IList<G3EqualityComparer<PropertyInfo>> Comparers { get; } = new List<G3EqualityComparer<PropertyInfo>>
     {
-        transformers = transformers.Add(transformer);
-    }
+        new G3EqualityComparer<PropertyInfo>((a, b) => a?.Name == b?.Name)
+    };
 
-    public void AddRule(IPropertyInfoRule<TSource, TTarget> rule)
-    {
-        if (rules.Contains(rule)) return;
-        rules = rules.Add(rule);
-    }
+    public IList<IPropertiesFilter<TSource, TTarget>> Filters { get; } = new List<IPropertiesFilter<TSource, TTarget>>();
+
+    public IList<ITransformer> Transformers { get; } = new List<ITransformer>();
 
     /// <summary>
     /// When true mapping will throw valid exceptions, otherwise they are silently handled and ignored.

@@ -18,7 +18,7 @@ public static class MappingExtensions
             if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
         var configuration = Configuration<T, T>.Empty;
-        foreach (var (Name, Value) in properties) configuration.AddTransformer(new DynamicTransformer(Value.GetType(), Name, () => Value));
+        foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
         return MapBuilder.GetNewInstance().Build(configuration, t);
     }
 
@@ -41,7 +41,7 @@ public static class MappingExtensions
             var foundProp = typeof(T).GetProperty(prop.Name);
             if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
-        foreach (var (Name, Value) in properties) configuration.AddTransformer(new DynamicTransformer(Value.GetType(), Name, () => Value));
+        foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
         return MapBuilder.GetNewInstance().Build(configuration, t);
     }
 
@@ -69,7 +69,7 @@ public static class MappingExtensions
     {
         var configuration = new Configuration<T, T>();
         configuration.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
-        return MapBuilder.GetNewInstance().Build(configuration, t); 
+        return MapBuilder.GetNewInstance().Build(configuration, t);
     }
 
     /// <summary>

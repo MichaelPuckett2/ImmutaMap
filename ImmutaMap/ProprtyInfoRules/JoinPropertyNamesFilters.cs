@@ -1,10 +1,10 @@
 ﻿namespace ImmutaMap.ProprtyInfoRules;
 
-public class JoinPropertyNamesRule<TSource, TTarget> : IPropertyInfoRule<TSource, TTarget> where TSource : notnull where TTarget : notnull
+public class JoinPropertyNamesFilters<TSource, TTarget> : IPropertiesFilter<TSource, TTarget> where TSource : notnull where TTarget : notnull
 {
-    JoinPropertyNamesRule() { }
-    public static JoinPropertyNamesRule<TSource, TTarget> Instance { get; } = new();
-    public void Set(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)
+    JoinPropertyNamesFilters() { }
+    public static JoinPropertyNamesFilters<TSource, TTarget> Instance { get; } = new();
+    public void Filter(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)
     {
         var joined = sourcePropertyInfos.Join(targetPropertyInfos,
             sourceProperty => sourceProperty.Name,
