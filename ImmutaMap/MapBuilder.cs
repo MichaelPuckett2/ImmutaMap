@@ -77,10 +77,6 @@ public class MapBuilder
             var mappingFound = false;
             foreach (var transformer in configuration.Transformers)
             {
-                var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
-                    ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
-                    : default;
-
                 if (mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                 {
                     if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
@@ -102,13 +98,9 @@ public class MapBuilder
             }
             if (!mappingFound)
             {
-                var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
-                    ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
-                    : default;
-
-                if (previouslyMappedValue != default)
+                if (mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                 {
-                    SetTargetValue(target, targetPropertyInfo, previouslyMappedValue, configuration);
+                    SetTargetValue(target, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], configuration);
                 }
                 else
                 {
@@ -127,21 +119,6 @@ public class MapBuilder
                 }
             }
         }
-    }
-
-    int compareRunCount = 0;
-    int compareCount = 0;
-    private bool RunComparers<TSource, TTarget>(PropertyInfo a, PropertyInfo b, IConfiguration<TSource, TTarget> configuration)
-        where TSource : notnull where TTarget : notnull
-    {
-        compareRunCount++;
-        bool isMatch = false;
-        foreach (var comparer in configuration.Comparers)
-        {
-            compareCount++;
-            isMatch = comparer.Equals(a, b) || isMatch;
-        }
-        return isMatch;
     }
 
     private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
@@ -172,13 +149,4 @@ public class MapBuilder
 
         mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
-}
-
-public class IgnoreHash<T>
-{
-    IgnoreHash(T item) => Item = item;
-    public T Item { get; }
-    public override int GetHashCode() => 0;
-    public static implicit operator IgnoreHash<T>(T item) => new(item);
-    public static implicit operator T(IgnoreHash<T> ignoreHash) => ignoreHash.Item;
 }

@@ -99,7 +99,7 @@ public class MapTests
         var actor = personRecord
             .As<PersonRecord, PersonClass>(config =>
             {
-                config.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
+                config.TransformSourceOnAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -119,7 +119,7 @@ public class MapTests
         var actor = personRecord
             .As<PersonRecord, PersonClass>(config =>
             {
-                config.MapTargetAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
+                config.TransformTargetOnAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -138,7 +138,7 @@ public class MapTests
         //Act
         var actor = personRecord.As<PersonRecord, PersonClass>(map =>
         {
-            map.MapTargetAttribute<PersonRecord, PersonClass, TrimAttribute>((attribute, value) => value is string str ? str.Trim() : value);
+            map.TransformTargetOnAttribute<PersonRecord, PersonClass, TrimAttribute>((attribute, value) => value is string str ? str.Trim() : value);
         });
 
         //Assert
@@ -162,7 +162,7 @@ public class MapTests
         var actor = listItems
             .As<ListItems, DictionaryItems>(config =>
             {
-                config.MapPropertyType(x => x.Items, items =>
+                config.TransformType(x => x.Items, items =>
                 {
                     var dictionary = new Dictionary<int, string>();
                     var counter = 0;
@@ -256,7 +256,7 @@ public class MapTests
         //Act
         var actor = personClass.AsDynamic(config =>
         {
-            config.SkipProperty(x => x.FirstName);
+            config.FilterOut(x => x.FirstName);
         });
 
         //Assert

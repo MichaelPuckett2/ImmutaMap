@@ -3,9 +3,9 @@
 /// <inheritdoc />
 public class TargetAttributeTransformer<TAttribute> : ITransformer where TAttribute : Attribute
 {
-    private readonly Func<Attribute, object, object> func;
+    private readonly Func<TAttribute, object, object> func;
 
-    public TargetAttributeTransformer(Func<Attribute, object, object> func)
+    public TargetAttributeTransformer(Func<TAttribute, object, object> func)
     {
         this.func = func;
     }

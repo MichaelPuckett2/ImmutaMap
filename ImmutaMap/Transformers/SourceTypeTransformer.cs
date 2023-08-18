@@ -4,12 +4,12 @@
 public class SourceTypeTransformer : ITransformer
 {
     private readonly Type type;
-    private readonly Func<object, object> typeMapFunc;
+    private readonly Func<object, object> targetValueFunc;
 
-    public SourceTypeTransformer(Type type, Func<object, object> typeMapFunc)
+    public SourceTypeTransformer(Type type, Func<object, object> targetValueFunc)
     {
         this.type = type;
-        this.typeMapFunc = typeMapFunc;
+        this.targetValueFunc = targetValueFunc;
     }
 
     /// <inheritdoc />
@@ -21,7 +21,7 @@ public class SourceTypeTransformer : ITransformer
             return false;
         }
 
-        result = typeMapFunc.Invoke(sourcePropertyInfo.GetValue(source)!);
+        result = targetValueFunc.Invoke(sourcePropertyInfo.GetValue(source)!);
 
         return true;
     }
@@ -35,7 +35,7 @@ public class SourceTypeTransformer : ITransformer
             return false;
         }
 
-        result = typeMapFunc.Invoke(previouslyMappedValue);
+        result = targetValueFunc.Invoke(previouslyMappedValue);
 
         return true;
     }

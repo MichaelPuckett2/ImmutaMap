@@ -68,7 +68,7 @@ public static class MappingExtensions
         where T : notnull where TSourcePropertyType : notnull
     {
         var configuration = new Configuration<T, T>();
-        configuration.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
+        configuration.TransformType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
         return MapBuilder.GetNewInstance().Build(configuration, t);
     }
 

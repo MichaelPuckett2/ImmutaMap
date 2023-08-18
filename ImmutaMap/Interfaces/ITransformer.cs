@@ -31,3 +31,20 @@ public interface ITransformer
     /// <returns>True if transforming matches any conditions and the result is transformed and false if it does not.</returns>
     bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object targetValue);
 }
+
+public interface ITransform<TSourceValue, TTargetValue>
+{
+    Func<PropertyInfo, TSourceValue, bool> If { get; }
+    Func<PropertyInfo, TSourceValue, TTargetValue> Then { get; }
+}
+
+public class Transform<TSourceValue, TTargetValue> : ITransform<TSourceValue, TTargetValue>
+{
+    public Transform(Func<PropertyInfo, TSourceValue, bool> @if, Func<PropertyInfo, TSourceValue, TTargetValue> then)
+    {
+        If = @if;
+        Then = then;
+    }
+    public Func<PropertyInfo, TSourceValue, bool> If { get; }
+    public Func<PropertyInfo, TSourceValue, TTargetValue> Then { get; }
+}
