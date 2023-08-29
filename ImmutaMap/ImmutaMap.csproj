@@ -41,4 +41,8 @@
 		<PackageReference Include="TripleG3.ExpressionExtensions" Version="7.0.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="PostOps\" />
+	</ItemGroup>
+
 </Project>

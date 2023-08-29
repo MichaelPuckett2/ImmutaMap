@@ -1,4 +1,4 @@
-﻿namespace ImmutaMap.Interfaces;
+﻿namespace ImmutaMap.Transformers;
 
 /// <summary>
 /// Transforms the target value of properties or specific properties.

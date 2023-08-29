@@ -1,14 +1,14 @@
-﻿namespace ImmutaMap.ProprtyInfoRules;
+﻿namespace ImmutaMap.Filters;
 
-public class IgnoreCaseFilter<TSource, TTarget> : IPropertiesFilter<TSource, TTarget> where TSource : notnull where TTarget : notnull
+public class JoinPropertyNamesFilters : IPropertiesFilter
 {
-    IgnoreCaseFilter() { }
-    public static IgnoreCaseFilter<TSource, TTarget> Instance { get; } = new();
+    JoinPropertyNamesFilters() { }
+    public static JoinPropertyNamesFilters Instance { get; } = new();
     public void Filter(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)
     {
         var joined = sourcePropertyInfos.Join(targetPropertyInfos,
-            sourceProperty => sourceProperty.Name.ToLowerInvariant(),
-            resultProperty => resultProperty.Name.ToLowerInvariant(),
+            sourceProperty => sourceProperty.Name,
+            resultProperty => resultProperty.Name,
             (sourceProperty, targetProperty) => (sourceProperty, targetProperty));
         sourcePropertyInfos = joined.Select(x => x.sourceProperty);
         targetPropertyInfos = joined.Select(x => x.targetProperty);

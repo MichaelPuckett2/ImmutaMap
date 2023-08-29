@@ -1,4 +1,4 @@
-﻿namespace ImmutaMap;
+﻿namespace ImmutaMap.Utilities;
 
 public record IgnoreHash<T>(T Item)
 {

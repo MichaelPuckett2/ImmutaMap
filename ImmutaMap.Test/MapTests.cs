@@ -1,4 +1,6 @@
+using ImmutaMap.Config;
 using ImmutaMap.Transformers;
+using Newtonsoft.Json.Linq;
 
 namespace ImmutaMap.Test;
 
@@ -78,8 +80,8 @@ public class MapTests
         var actor = personRecord
             .As<PersonRecord, PersonClassNamesSpelledDifferent>(config =>
             {                
-                config.MapNames(x => x.FirstName, x => x.First_Name);
-                config.MapNames(x => x.LastName, x => x.Last_Name);
+                config.MapNames<PersonRecord, PersonClassNamesSpelledDifferent>(x => x.FirstName, x => x.First_Name);
+                config.MapNames<PersonRecord, PersonClassNamesSpelledDifferent>(x => x.LastName, x => x.Last_Name);
             });
 
         //Assert
@@ -162,7 +164,7 @@ public class MapTests
         var actor = listItems
             .As<ListItems, DictionaryItems>(config =>
             {
-                config.TransformType(x => x.Items, items =>
+                config.TransformType<ListItems, List<string>>(x => x.Items, items =>
                 {
                     var dictionary = new Dictionary<int, string>();
                     var counter = 0;
@@ -256,7 +258,7 @@ public class MapTests
         //Act
         var actor = personClass.AsDynamic(config =>
         {
-            config.FilterOut(x => x.FirstName);
+            config.FilterOut<PersonClass>(x => x.FirstName);
         });
 
         //Assert
@@ -280,6 +282,34 @@ public class MapTests
         //Assert
         Assert.AreEqual(personClass.FirstName, actor.firstName);
         Assert.AreEqual(personClass.LastName, actor.lastName);
+        Assert.AreEqual(personClass.Age, actor.age);
+    }
+
+    [TestMethod]
+    public void TestCache()
+    {
+        //Arrange
+        var personClass = new PersonRecord("FirstMock1", "LastMock1", 50);
+
+        personClass.Cache<PersonRecord, PersonLowerPropsLastNameDifferentRecord>(config =>
+        {
+            config.IgnoreCase();
+            config.MapNames<PersonRecord, PersonLowerPropsLastNameDifferentRecord>(x => x.LastName, x => x.last_Name);
+        });
+
+        //personClass.Cache<PersonRecord, EmployeeRecord>(config =>
+        //{
+        //    configuration.TransformType(property, (sourceValue) => targetValue.Invoke(property.Compile().Invoke(source))!);
+        //    config.Transformers.Add(new PropertyTransformer<string>(nameof(, propertyValue));
+        //    config.MapNames<PersonRecord, PersonLowerPropsLastNameDifferentRecord>(x => x.LastName, x => x.last_Name);
+        //});
+
+        //Act
+        var actor = personClass.As<PersonLowerPropsLastNameDifferentRecord>();
+
+        //Assert
+        Assert.AreEqual(personClass.FirstName, actor.firstName);
+        Assert.AreEqual(personClass.LastName, actor.last_Name);
         Assert.AreEqual(personClass.Age, actor.age);
     }
 }

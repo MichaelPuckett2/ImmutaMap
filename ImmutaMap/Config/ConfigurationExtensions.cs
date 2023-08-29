@@ -1,4 +1,6 @@
-﻿namespace ImmutaMap;
+﻿using ImmutaMap.Filters;
+
+namespace ImmutaMap.Config;
 
 public static class ConfigurationExtensions
 {
@@ -9,13 +11,13 @@ public static class ConfigurationExtensions
     /// <param name="sourceExpression">Expression to gain source property name.</param>
     /// <param name="targetExpression">Expression to gain target property name.</param>
     /// <returns>Current MapConfiguration.</returns>
-    public static IConfiguration<TSource, TTarget> MapNames<TSource, TTarget, TResult>(
-       this IConfiguration<TSource, TTarget> configuration,
-       Expression<Func<TSource, TResult>> sourceExpression,
-       Expression<Func<TTarget, TResult>> targetExpression)
+    public static IConfiguration MapNames<TSource, TTarget>(
+       this IConfiguration configuration,
+       Expression<Func<TSource, object>> sourceExpression,
+       Expression<Func<TTarget, object>> targetExpression)
        where TTarget : notnull where TSource : notnull
     {
-        Func<PropertyInfo?, PropertyInfo?, bool> equals = (a, b) 
+        Func<PropertyInfo?, PropertyInfo?, bool> equals = (a, b)
             => a != null && (b == null || a.Name == sourceExpression.GetMemberName() && b.Name == targetExpression.GetMemberName());
         configuration.Comparers.Add(equals);
         return configuration;
@@ -24,18 +26,17 @@ public static class ConfigurationExtensions
     /// <summary>
     /// Maps the source property value to the target with the given expression value.
     /// </summary>
-    /// <typeparam name="TSourcePropertyType">The source property type being mapped.</typeparam>
-    /// <param name="sourceExpression">The expression used to get the source property name and value. Invoked on Build()</param>
-    /// <param name="propertyResultFunc">The function used to get the target property value. Invoked on Build()</param>
+    /// <typeparam name="TProperty">The source property type being mapped.</typeparam>
+    /// <param name="property">The expression used to get the source property name and value. Invoked on Build()</param>
+    /// <param name="propertyValue">The function used to get the target property value. Invoked on Build()</param>
     /// <returns>Current mapConfiguration.</returns>
-    public static IConfiguration<TSource, TTarget> TransformType<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
-       this IConfiguration<TSource, TTarget> configuration,
-       Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
-       Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
-       where TTarget : notnull where TSource : notnull
-       where TSourcePropertyType : notnull where TTargetPropertyType : notnull
+    public static IConfiguration TransformType<TSource, TProperty>(
+       this IConfiguration configuration,
+       Expression<Func<TSource, TProperty>> property,
+       Func<TProperty, object> propertyValue)
+       where TSource : notnull where TProperty : notnull
     {
-        configuration.Transformers.Add(new PropertyTransformer<TSourcePropertyType, TTargetPropertyType>(sourceExpression.GetMemberName(), propertyResultFunc));
+        configuration.Transformers.Add(new PropertyTransformer<TProperty>(property.GetMemberName(), propertyValue));
         return configuration;
     }
 
@@ -45,8 +46,8 @@ public static class ConfigurationExtensions
     /// <typeparam name="TAttribute">The attribute type.</typeparam>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current mapConfiguration.</returns>
-    public static IConfiguration<TSource, TTarget> TransformSourceOnAttribute<TSource, TTarget, TAttribute>(
-       this IConfiguration<TSource, TTarget> configuration,
+    public static IConfiguration TransformSourceOnAttribute<TSource, TTarget, TAttribute>(
+       this IConfiguration configuration,
        Func<TAttribute, object, object> func)
        where TTarget : notnull where TSource : notnull
        where TAttribute : Attribute
@@ -65,8 +66,8 @@ public static class ConfigurationExtensions
     /// <param name="map">The map used in this method.</param>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current Map.</returns>
-    public static IConfiguration<TSource, TTarget> TransformTargetOnAttribute<TSource, TTarget, TAttribute>(
-       this IConfiguration<TSource, TTarget> configuration,
+    public static IConfiguration TransformTargetOnAttribute<TSource, TTarget, TAttribute>(
+       this IConfiguration configuration,
        Func<TAttribute, object, object> func)
        where TTarget : notnull where TSource : notnull
        where TAttribute : Attribute
@@ -80,9 +81,7 @@ public static class ConfigurationExtensions
     /// Sets a rule to ignore case when mapping.
     /// </summary>
     /// <returns>Current Configuration</returns>
-    public static IConfiguration<TSource, TTarget> IgnoreCase<TSource, TTarget>(
-       this IConfiguration<TSource, TTarget> configuration)
-       where TTarget : notnull where TSource : notnull
+    public static IConfiguration IgnoreCase(this IConfiguration configuration)
     {
         Func<PropertyInfo?, PropertyInfo?, bool> equals = (a, b) => a?.Name.Equals(b?.Name, StringComparison.InvariantCultureIgnoreCase) ?? b is null;
         configuration.Comparers.Add(equals);
@@ -93,11 +92,11 @@ public static class ConfigurationExtensions
     /// Sets a rule to ignore case when mapping.
     /// </summary>
     /// <returns>Current Configuration</returns>
-    public static IConfiguration<TSource, TTarget> FilterOut<TSource, TTarget>(
-       this IConfiguration<TSource, TTarget> configuration, Expression<Func<TSource, TTarget>> expression)
-       where TTarget : notnull where TSource : notnull
+    public static IConfiguration FilterOut<TSource>(
+       this IConfiguration configuration, Expression<Func<TSource, object>> expression)
+       where TSource : notnull
     {
-        configuration.Filters.Add((SkipPropertyNamesFilter<TSource, TTarget>)expression);
+        configuration.Filters.Add((SkipPropertyNamesFilter<TSource>)expression);
         return configuration;
     }
 }

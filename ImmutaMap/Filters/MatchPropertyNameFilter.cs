@@ -1,9 +1,9 @@
-﻿namespace ImmutaMap.ProprtyInfoRules;
+﻿namespace ImmutaMap.Filters;
 
-public class MatchPropertyNameFilter<TSource, TTarget> : IPropertiesFilter<TSource, TTarget> where TSource : notnull where TTarget : notnull
+public class MatchPropertyNameFilter : IPropertiesFilter
 {
     MatchPropertyNameFilter() { }
-    public static MatchPropertyNameFilter<TSource, TTarget> Instance { get; } = new();
+    public static MatchPropertyNameFilter Instance { get; } = new();
     public HashSet<(string SourceName, string TargetName)> SourceNameToTargetNames { get; } = new();
 
     public void Filter(ref IEnumerable<PropertyInfo> sourcePropertyInfos, ref IEnumerable<PropertyInfo> targetPropertyInfos)

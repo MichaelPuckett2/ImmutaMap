@@ -1,8 +1,10 @@
-﻿namespace ImmutaMap;
+﻿using ImmutaMap.Config;
+
+namespace ImmutaMap.Utilities;
 
 public static class Instantiator
 {
-    public static T New<T>(dynamic a, Action<Configuration<T, T>> mapAction) where T : class
+    public static dynamic New<T>(dynamic a, Action<Configuration> mapAction) where T : class
     {
         var target = new TypeFormatter().GetInstance<T>();
         var properties = new List<(string Name, object Value)>();
@@ -11,18 +13,18 @@ public static class Instantiator
             var foundProp = typeof(T).GetProperty(prop.Name);
             if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
-        var configuration = new Configuration<T, T>();
+        var configuration = new Configuration();
         mapAction.Invoke(configuration);
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, target);
+        return MapBuilder.GetNewInstance().Build<T, dynamic>(configuration, target);
     }
 
     public static T New<T>() where T : class
     {
         var target = new TypeFormatter().GetInstance<T>();
         var properties = new List<(string Name, object Value)>();
-        var configuration = new Configuration<T, T>();
+        var configuration = new Configuration();
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, target);
+        return MapBuilder.GetNewInstance().Build<T, dynamic>(configuration, target);
     }
 }

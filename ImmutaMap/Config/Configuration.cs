@@ -1,17 +1,16 @@
-﻿namespace ImmutaMap;
+﻿namespace ImmutaMap.Config;
 
 /// <summary>
 /// Configurations used for mapping.
 /// </summary>
-public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
-    where TSource : notnull where TTarget : notnull
+public class Configuration : IConfiguration
 {
     public IList<G3EqualityComparer<PropertyInfo>> Comparers { get; } = new List<G3EqualityComparer<PropertyInfo>>
     {
         new G3EqualityComparer<PropertyInfo>((a, b) => a?.Name == b?.Name)
     };
 
-    public IList<IPropertiesFilter<TSource, TTarget>> Filters { get; } = new List<IPropertiesFilter<TSource, TTarget>>();
+    public IList<IPropertiesFilter> Filters { get; } = new List<IPropertiesFilter>();
 
     public IList<ITransformer> Transformers { get; } = new List<ITransformer>();
 
@@ -23,5 +22,5 @@ public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
     /// <summary>
     /// Static empty Map.
     /// </summary>
-    public static Configuration<TSource, TTarget> Empty { get; } = new Configuration<TSource, TTarget>();
+    public static Configuration Empty { get; } = new Configuration();
 }

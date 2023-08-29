@@ -1,4 +1,7 @@
-﻿namespace ImmutaMap;
+﻿using ImmutaMap.Config;
+using System.Runtime.CompilerServices;
+
+namespace ImmutaMap;
 
 public class MapBuilder
 {
@@ -35,11 +38,12 @@ public class MapBuilder
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
     /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source)
+    public TTarget Build<TSource, TTarget>(IConfiguration configuration, TSource source)
         where TSource : notnull where TTarget : notnull
     {
         var target = typeFormatter.GetInstance<TTarget>();
         Copy(configuration, source, target);
+        PostOps(configuration, source, target);
         return target;
     }
 
@@ -52,14 +56,22 @@ public class MapBuilder
     /// <param name="source">The source used during the mapping.</param>
     /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> args) where TSource : notnull where TTarget : notnull
+    public TTarget Build<TSource, TTarget>(IConfiguration configuration, TSource source, Func<object[]> args)
+        where TSource : notnull where TTarget : notnull
     {
         var target = typeFormatter.GetInstance<TTarget>(args);
         Copy(configuration, source, target);
+        PostOps(configuration, source, target);
         return target;
     }
 
-    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget : notnull
+    public void Cache<TSource, TTarget>(IConfiguration configuration)
+        where TSource : notnull where TTarget : notnull
+    {
+        Utilities.Cache.Configurations.Add((typeof(TSource), typeof(TTarget)), configuration);
+    }
+
+    private void Copy<TSource, TTarget>(IConfiguration configuration, TSource source, TTarget target) where TSource : notnull where TTarget : notnull
     {
         var sourceProps = source.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
         var targetProps = target.GetType().GetProperties(PropertyBindingFlag).AsEnumerable();
@@ -80,7 +92,7 @@ public class MapBuilder
                     if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result, configuration);
+                        SetTargetValue1(target, targetPropertyInfo, result, configuration);
                         mappingFound = true;
                     }
                 }
@@ -89,7 +101,7 @@ public class MapBuilder
                     if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
                     {
                         mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result, configuration);
+                        SetTargetValue1(target, targetPropertyInfo, result, configuration);
                         mappingFound = true;
                     }
                 }
@@ -98,7 +110,7 @@ public class MapBuilder
             {
                 if (mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                 {
-                    SetTargetValue(target, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], configuration);
+                    SetTargetValue1(target, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], configuration);
                 }
                 else
                 {
@@ -107,43 +119,66 @@ public class MapBuilder
                     && sourcePropertyInfo.PropertyType == typeof(TSource)
                     && targetPropertyInfo.PropertyType == typeof(TTarget))
                     {
-                        targetValue = GetNewInstance().Build(configuration, source);
+                        targetValue = GetNewInstance().Build<TSource, TTarget>(configuration, source);
                     }
                     else
                     {
                         targetValue = sourcePropertyInfo.GetValue(source)!;
                     }
-                    SetTargetValue(target, targetPropertyInfo, targetValue, configuration);
+                    SetTargetValue1(target, targetPropertyInfo, targetValue, configuration);
                 }
             }
         }
     }
 
-    private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
-        where TSource : notnull where TTarget : notnull
+    private void SetTargetValue1<TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration configuration)
+        where TTarget : notnull
     {
         if (targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue?.GetType()) || targetValue == null)
         {
-            if (targetPropertyInfo.CanWrite)
-            {
-                targetPropertyInfo.SetValue(target, targetValue);
-                mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
-            }
-            else
-            {
-                var fields = typeof(TTarget).GetFields(PropertyBindingFlag);
-                var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
+            SetTargetValue2(ref target, targetPropertyInfo, targetValue!);
+            return;
+        }
+        throw new BuildException(targetValue.GetType(), targetPropertyInfo);
+    }
 
-                if (backingField != null)
-                {
-                    backingField.SetValue(target, targetValue);
-                    mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
-                }
-            }
-        }
-        else
+    private void SetTargetValue2<TTarget>(ref TTarget target, PropertyInfo targetPropertyInfo, object targetValue) where TTarget : notnull
+    {
+        if (targetPropertyInfo.CanWrite)
         {
-            throw new BuildException(targetValue.GetType(), targetPropertyInfo);
+            SetTargetValue3(ref target, targetPropertyInfo, targetValue);
+            return;
         }
+        var fields = target.GetType().GetFields(PropertyBindingFlag);
+        var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
+
+        if (backingField != null)
+        {
+            backingField.SetValue(target, targetValue);
+            mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+        }
+        return;
+    }
+
+    private void SetTargetValue3<TTarget>(ref TTarget target, PropertyInfo targetPropertyInfo, object targetValue) where TTarget : notnull
+    {
+        if (target.GetType().IsValueType)
+        {
+            var box = RuntimeHelpers.GetObjectValue(target);
+            targetPropertyInfo.SetValue(box, targetValue);
+            mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+            target = (TTarget)box;
+            return;
+        }
+        targetPropertyInfo.SetValue(target, targetValue);
+        mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+        return;
+    }
+
+    private void PostOps<TSource, TTarget>(IConfiguration configuration, TSource source, TTarget target)
+    where TSource : notnull
+    where TTarget : notnull
+    {
+        throw new NotImplementedException();
     }
 }
