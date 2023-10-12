@@ -13,7 +13,6 @@
         this IConfiguration<TSource, TTarget> configuration,
         Expression<Func<TSource, TResult>> sourceExpression,
         Expression<Func<TTarget, TResult>> targetExpression)
-        where TTarget : notnull where TSource : notnull
     {
         configuration.PropertyNameMaps.Add((sourceExpression.GetMemberName(), targetExpression.GetMemberName()));
         return configuration;
@@ -30,8 +29,6 @@
         this IConfiguration<TSource, TTarget> configuration,
         Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
         Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
-        where TTarget : notnull where TSource : notnull
-        where TSourcePropertyType : notnull where TTargetPropertyType : notnull
     {
         if (sourceExpression.Body is MemberExpression sourceMemberExpression)
         {
@@ -49,7 +46,6 @@
      public static IConfiguration<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(
         this IConfiguration<TSource, TTarget> configuration,
         Func<TAttribute, object, object> func)
-        where TTarget : notnull where TSource : notnull
         where TAttribute : Attribute
     {
         var att = new SourceAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
@@ -69,7 +65,6 @@
      public static IConfiguration<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(
         this IConfiguration<TSource, TTarget> configuration,
         Func<TAttribute, object, object> func)
-        where TTarget : notnull where TSource : notnull
         where TAttribute : Attribute
     {
         var att = new TargetAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
@@ -86,7 +81,6 @@
      public static IConfiguration<TSource, TTarget> MapType<TSource, TTarget, TType>(
         this IConfiguration<TSource, TTarget> configuration,
         Func<object, object> typeMapFunc)
-        where TTarget : notnull where TSource : notnull
     {
         var typeMapping = new SourceTypeTransformer(typeof(TType), typeMapFunc);
         configuration.Transformers.Add(typeMapping);

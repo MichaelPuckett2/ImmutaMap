@@ -1,8 +1,6 @@
 ﻿namespace ImmutaMap;
 
 public interface IConfiguration<TSource, TTarget>
-    where TSource : notnull
-    where TTarget : notnull
 {
     bool IgnoreCase { get; set; }
     HashSet<(string SourcePropertyName, string TargetPropertyName)> PropertyNameMaps { get; }

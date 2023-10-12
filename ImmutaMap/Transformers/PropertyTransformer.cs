@@ -2,7 +2,6 @@
 
 /// <inheritdoc />
 public class PropertyTransformer<TSourcePropertyType, TTargetPropertyType> : ITransformer
-    where TSourcePropertyType : notnull where TTargetPropertyType : notnull
 {
     private readonly (string Name, Type type) key;
     private readonly Func<TSourcePropertyType, TTargetPropertyType> func;

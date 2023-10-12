@@ -2,7 +2,7 @@
 
 public static class Instantiator
 {
-    public static T New<T>(dynamic a, Action<Configuration<T, T>> mapAction) where T : class
+    public static T? New<T>(dynamic a, Action<Configuration<T, T>> mapAction) where T : class
     {
         var target = new TypeFormatter().GetInstance<T>();
         var properties = new List<(string Name, object Value)>();
@@ -17,7 +17,7 @@ public static class Instantiator
         return MapBuilder.GetNewInstance().Build(configuration, target);
     }
 
-    public static T New<T>() where T : class
+    public static T? New<T>() where T : class
     {
         var target = new TypeFormatter().GetInstance<T>();
         var properties = new List<(string Name, object Value)>();

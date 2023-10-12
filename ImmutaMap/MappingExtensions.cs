@@ -9,7 +9,7 @@ public static class MappingExtensions
     /// <param name="t">The instantiation of the type being mapped from.</param>
     /// <param name="a">The anonymous type used to make the mapping work.</param>
     /// <returns>Instantiated T target value.</returns>
-    public static T With<T>(this T t, dynamic a) where T : notnull
+    public static T? With<T>(this T t, dynamic a)
     {
         var properties = new List<(string Name, object Value)>();
         foreach (var prop in a.GetType().GetProperties())
@@ -31,7 +31,7 @@ public static class MappingExtensions
     /// <param name="Map">Map that can be supplied to mapping.</param>
     /// <param name="throwExceptions">Options value that determines if exceptions will be thrown or handled silently.  Default is true to throw exceptoipns.</param>
     /// <returns>Instantiated T target value.</returns>
-    public static T With<T>(this T t, dynamic a, Action<IConfiguration<T, T>> mapAction) where T : notnull
+    public static T? With<T>(this T t, dynamic a, Action<IConfiguration<T, T>> mapAction)
     {
         var configuration = new Configuration<T, T>();
         mapAction.Invoke(configuration);
@@ -45,7 +45,7 @@ public static class MappingExtensions
         return MapBuilder.GetNewInstance().Build(configuration, t);
     }
 
-    public static T With<T>(this T source, Action<IConfiguration<T, T>> mapAction)
+    public static T? With<T>(this T source, Action<IConfiguration<T, T>> mapAction)
         where T : notnull
     {
         var configuration = new Configuration<T, T>();
@@ -62,10 +62,9 @@ public static class MappingExtensions
     /// <param name="sourceExpression">The expression used to get the source property.</param>
     /// <param name="valueFunc">The function used to get the target value from the source property.</param>
     /// <returns></returns>
-    public static T With<T, TSourcePropertyType>(this T t,
+    public static T? With<T, TSourcePropertyType>(this T t,
                                                  Expression<Func<T, TSourcePropertyType>> sourceExpression,
                                                  Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
-        where T : notnull where TSourcePropertyType : notnull
     {
         var configuration = new Configuration<T, T>();
         configuration.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
@@ -81,10 +80,9 @@ public static class MappingExtensions
     /// <param name="sourceExpression">The expression used to get the source property.</param>
     /// <param name="value">The function used to get the target value from the source property.</param>
     /// <returns></returns>
-    public static T With<T, TSourcePropertyType>(this T t,
+    public static T? With<T, TSourcePropertyType>(this T t,
                                                  Expression<Func<T, TSourcePropertyType>> sourceExpression,
                                                  TSourcePropertyType value)
-        where T : notnull where TSourcePropertyType : notnull
     {
         return t.With(sourceExpression, propertyValue => value);
     }
@@ -95,7 +93,7 @@ public static class MappingExtensions
     /// <typeparam name="T">The type to map to.</typeparam>
     /// <param name="obj">The obejct this method works against.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static T As<T>(this object obj) where T : notnull
+    public static T? As<T>(this object obj)
     {
         return MapBuilder.GetNewInstance().Build(Configuration<object, T>.Empty, obj);
     }
@@ -107,20 +105,19 @@ public static class MappingExtensions
     /// <param name="source">The obejct this method works against.</param>
     /// <param name="mapAction">Sets mapping configurations inline.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static TTarget As<TSource, TTarget>(this TSource source, Action<Configuration<TSource, TTarget>> mapAction)
-        where TSource : notnull where TTarget : notnull
+    public static TTarget? As<TSource, TTarget>(this TSource source, Action<Configuration<TSource, TTarget>> mapAction)
     {
         var configuration = new Configuration<TSource, TTarget>();
         mapAction.Invoke(configuration);
         return MapBuilder.GetNewInstance().Build(configuration, source);
     }
 
-    public static dynamic AsDynamic<T>(this T t) where T : notnull
+    public static dynamic? AsDynamic<T>(this T t)
     {
         return new AnonymousMapBuilder().Build(Configuration<T, dynamic>.Empty, t);
     }
 
-    public static dynamic AsDynamic<T>(this T t, Action<Configuration<T, dynamic>> mapAction) where T : notnull
+    public static dynamic AsDynamic<T>(this T t, Action<Configuration<T, dynamic>> mapAction)
     {
         var configuration = new Configuration<T, dynamic>();
         mapAction.Invoke(configuration);

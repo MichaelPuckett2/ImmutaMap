@@ -6,7 +6,6 @@ namespace ImmutaMap;
 /// Configurations used for mapping.
 /// </summary>
 public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
-    where TSource : notnull where TTarget : notnull
 {
     public HashSet<(string SourcePropertyName, string TargetPropertyName)> PropertyNameMaps { get; } = new();
     public HashSet<string> SkipPropertyNames { get; } = new();

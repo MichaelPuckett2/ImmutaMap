@@ -15,7 +15,6 @@ public class AnonymousMapBuilder
     /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
     public dynamic Build<TSource, TTarget>(Configuration<TSource, TTarget> map, TSource source)
-        where TSource : notnull where TTarget : notnull
     {
         willNotThrowExceptions = map.WillNotThrowExceptions;
         ignoreCase = map.IgnoreCase;
@@ -24,10 +23,10 @@ public class AnonymousMapBuilder
     }
 
     private dynamic InstantiateAnonymous<TSource, TTarget>(Configuration<TSource, TTarget> map, TSource source)
-        where TSource : notnull
-        where TTarget : notnull
     {
-        var sourcePropertyInfos = source.GetType().GetProperties(PropertyBindingFlag);
+        var sourcePropertyInfos = source == null
+            ? typeof(TSource).GetType().GetProperties(PropertyBindingFlag)
+            : source.GetType().GetProperties(PropertyBindingFlag);
         dynamic target = new ExpandoObject();
         foreach (var propertyInfo in sourcePropertyInfos.Where(x => !map.SkipPropertyNames.Contains(x.Name)))
         {

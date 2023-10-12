@@ -16,9 +16,9 @@ public class MapTests
         var actor = personClass.With(x => x.FirstName, ExpectedFirstName);
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(personClass.LastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(personClass.LastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -32,9 +32,9 @@ public class MapTests
         var actor = personClass.With(x => x.FirstName, firstName => $"{firstName}1");
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(personClass.LastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(personClass.LastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -48,9 +48,9 @@ public class MapTests
         var actor = personClass.With(new { FirstName = ExpectedFirstName });
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(personClass.LastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(personClass.LastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -63,9 +63,9 @@ public class MapTests
         var actor = personRecord.As<PersonClass>();
 
         //Assert
-        Assert.AreEqual(personRecord.FirstName, actor.FirstName);
-        Assert.AreEqual(personRecord.LastName, actor.LastName);
-        Assert.AreEqual(personRecord.Age, actor.Age);
+        Assert.AreEqual(personRecord.FirstName, actor?.FirstName);
+        Assert.AreEqual(personRecord.LastName, actor?.LastName);
+        Assert.AreEqual(personRecord.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -82,9 +82,9 @@ public class MapTests
             });
 
         //Assert
-        Assert.AreEqual(personRecord.FirstName, actor.FirstName);
-        Assert.AreEqual(personRecord.LastName, actor.Last_Name);
-        Assert.AreEqual(personRecord.Age, actor.Age);
+        Assert.AreEqual(personRecord.FirstName, actor?.FirstName);
+        Assert.AreEqual(personRecord.LastName, actor?.Last_Name);
+        Assert.AreEqual(personRecord.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -102,9 +102,9 @@ public class MapTests
             });
 
         //Assert
-        Assert.AreEqual(expectedValue, actor.FirstName);
-        Assert.AreEqual(personRecord.LastName, actor.LastName);
-        Assert.AreEqual(personRecord.Age, actor.Age);
+        Assert.AreEqual(expectedValue, actor?.FirstName);
+        Assert.AreEqual(personRecord.LastName, actor?.LastName);
+        Assert.AreEqual(personRecord.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -122,9 +122,9 @@ public class MapTests
             });
 
         //Assert
-        Assert.AreEqual(expectedValue, actor.FirstName);
-        Assert.AreEqual(personRecord.LastName, actor.LastName);
-        Assert.AreEqual(personRecord.Age, actor.Age);
+        Assert.AreEqual(expectedValue, actor?.FirstName);
+        Assert.AreEqual(personRecord.LastName, actor?.LastName);
+        Assert.AreEqual(personRecord.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -141,9 +141,9 @@ public class MapTests
         });
 
         //Assert
-        Assert.AreEqual(expectedValue, actor.FirstName);
-        Assert.AreEqual(personRecord.LastName, actor.LastName);
-        Assert.AreEqual(personRecord.Age, actor.Age);
+        Assert.AreEqual(expectedValue, actor?.FirstName);
+        Assert.AreEqual(personRecord.LastName, actor?.LastName);
+        Assert.AreEqual(personRecord.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -190,7 +190,7 @@ public class MapTests
             .With(x => x.FullName, fullName => $"{person.FirstName} {person.LastName}");
 
         //Assert
-        Assert.AreEqual(ExpectedValue, actor.FullName);
+        Assert.AreEqual(ExpectedValue, actor?.FullName);
     }
 
     [TestMethod]
@@ -206,7 +206,7 @@ public class MapTests
             .With(new { FullName = $"{person.FirstName} {person.LastName}" });
 
         //Assert
-        Assert.AreEqual(ExpectedValue, actor.FullName);
+        Assert.AreEqual(ExpectedValue, actor?.FullName);
     }
 
     [TestMethod]
@@ -224,9 +224,9 @@ public class MapTests
         });
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(ExpectedLastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(ExpectedLastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -240,9 +240,9 @@ public class MapTests
         var actor = personClass.AsDynamic();
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(personClass.LastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(personClass.LastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 
     [TestMethod]
@@ -259,8 +259,8 @@ public class MapTests
         });
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor.FirstName);
-        Assert.AreEqual(personClass.LastName, actor.LastName);
-        Assert.AreEqual(personClass.Age, actor.Age);
+        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
+        Assert.AreEqual(personClass.LastName, actor?.LastName);
+        Assert.AreEqual(personClass.Age, actor?.Age);
     }
 }

@@ -35,9 +35,12 @@ public class MapBuilder
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
     /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source)
-        where TSource : notnull where TTarget : notnull
+    public TTarget? Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source)
     {
+        if (source == null)
+        {
+            return default;
+        }
         var target = typeFormatter.GetInstance<TTarget>();
         Copy(configuration, source, target);
         return target;
@@ -52,17 +55,19 @@ public class MapBuilder
     /// <param name="source">The source used during the mapping.</param>
     /// <param name="args">Optional parameters that may be used to instantiate the target.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> args) where TSource : notnull where TTarget : notnull
+    public TTarget Build<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> args)
     {
         var target = typeFormatter.GetInstance<TTarget>(args);
         Copy(configuration, source, target);
         return target;
     }
 
-    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target) where TSource : notnull where TTarget: notnull 
+    private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target)
     {
         var skipProperties = configuration.Skips.Select(x => x.GetMemberName()).ToHashSet();
-        var sourcePropertyInfos = source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
+        var sourcePropertyInfos = source == null
+            ? typeof(TSource).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList()
+            : source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var targetPropertyInfos = typeof(TTarget).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var joinedPropertyInfos = GetSourceResultProperties<TSource, TTarget>(sourcePropertyInfos, targetPropertyInfos, configuration);
         AddPropertyNameMaps(configuration, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
@@ -107,7 +112,7 @@ public class MapBuilder
                 }
                 else
                 {
-                    object targetValue;
+                    object? targetValue;
                     if (typeof(TSource) != typeof(TTarget)
                     && sourcePropertyInfo.PropertyType == typeof(TSource)
                     && targetPropertyInfo.PropertyType == typeof(TTarget))
@@ -124,8 +129,7 @@ public class MapBuilder
         }
     }
 
-    private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object targetValue, IConfiguration<TSource, TTarget> configuration)
-        where TSource : notnull where TTarget : notnull
+    private void SetTargetValue<TSource, TTarget>(TTarget target, PropertyInfo targetPropertyInfo, object? targetValue, IConfiguration<TSource, TTarget> configuration)
     {
         if (targetValue != null && !targetPropertyInfo.PropertyType.IsAssignableFrom(targetValue.GetType()))
         {
@@ -144,17 +148,13 @@ public class MapBuilder
             var fields = typeof(TTarget).GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
             var backingField = fields.FirstOrDefault(x => x.Name == $"<{targetPropertyInfo.Name}>k__BackingField");
 
-            if (backingField != null)
-            {
-                backingField.SetValue(target, targetValue);
-            }
+            backingField?.SetValue(target, targetValue);
         }
 
         mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
 
     private void AddPropertyNameMaps<TSource, TResult>(IConfiguration<TSource, TResult> configuration, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
-        where TSource : notnull where TResult : notnull
     {
         foreach (var (sourcePropertyMapName, resultPropertyMapName) in configuration.PropertyNameMaps)
         {
@@ -184,7 +184,6 @@ public class MapBuilder
         GetSourceResultProperties<TSource, TTarget>(List<PropertyInfo> sourceProperties,
                                                     List<PropertyInfo> targetProperties,
                                                     IConfiguration<TSource, TTarget> configuration)
-        where TSource : notnull where TTarget : notnull
     {
         return sourceProperties.Join(targetProperties,
             sourceProperty => configuration.IgnoreCase ? sourceProperty.Name.ToLowerInvariant() : sourceProperty.Name,
