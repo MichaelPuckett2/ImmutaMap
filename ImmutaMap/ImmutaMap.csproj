@@ -13,7 +13,7 @@
 		<RepositoryUrl>https://github.com/MichaelPuckett2/ImmutaMap</RepositoryUrl>
 		<Company>TripleG3</Company>
 		<Authors>Michael Puckett, II</Authors>
-		<Version>8.2.0</Version>
+		<Version>9.0.0</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
