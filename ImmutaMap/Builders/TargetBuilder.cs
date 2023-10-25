@@ -75,31 +75,35 @@ public class TargetBuilder
         foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
         {
             var isTransformed = false;
-            foreach (var transformer in configuration.Transformers)
+            if (configuration is ITransform transform)
             {
-                var previouslyTransformedValue = transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
-                    ? transformedValues[(typeof(TSource), sourcePropertyInfo)]
-                    : default;
+                foreach (var transformer in transform.Transformers)
+                {
+                    var previouslyTransformedValue = transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
+                        ? transformedValues[(typeof(TSource), sourcePropertyInfo)]
+                        : default;
 
-                if (transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
-                {
-                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, transformedValues[(typeof(TSource), sourcePropertyInfo)], out object transformedValue))
+                    if (transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                     {
-                        transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
-                        SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
-                        isTransformed = true;
+                        if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, transformedValues[(typeof(TSource), sourcePropertyInfo)], out object transformedValue))
+                        {
+                            transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
+                            SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
+                            isTransformed = true;
+                        }
                     }
-                }
-                else
-                {
-                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object transformedValue))
+                    else
                     {
-                        transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
-                        SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
-                        isTransformed = true;
+                        if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object transformedValue))
+                        {
+                            transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
+                            SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
+                            isTransformed = true;
+                        }
                     }
                 }
             }
+
             if (!isTransformed)
             {
                 var previouslyTransformedValue = transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))

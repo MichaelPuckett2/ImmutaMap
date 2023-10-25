@@ -2,8 +2,8 @@
 
 public static partial class ConfigurationExtensions
 {
-    public static IAsyncConfiguration<TSource, TTarget> MapTypeAsync<TSource, TTarget, TType>(
-    this IAsyncConfiguration<TSource, TTarget> configuration,
+    public static ITransformAsync MapTypeAsync<TSource, TTarget, TType>(
+    this ITransformAsync configuration,
     Func<TType, Task<object?>> typeMapFunc)
     {
         var typeMapping = new AsyncSourceTypeTransformer<TType>(typeMapFunc);
@@ -11,8 +11,8 @@ public static partial class ConfigurationExtensions
         return configuration;
     }
 
-    public static IAsyncConfiguration<TSource, TTarget> MapPropertyTypeAsync<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
-        this IAsyncConfiguration<TSource, TTarget> configuration,
+    public static ITransformAsync MapPropertyTypeAsync<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
+        this ITransformAsync configuration,
         Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
         Func<TSourcePropertyType, ValueTask<TTargetPropertyType>> propertyResultFunc)
     {

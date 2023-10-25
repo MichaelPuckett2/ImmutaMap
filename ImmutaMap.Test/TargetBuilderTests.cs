@@ -96,9 +96,9 @@ public class TargetBuilderTests
 
         //Act
         var actor = personRecord
-            .To<PersonRecord, PersonClass>(map =>
+            .To<PersonRecord, PersonClass>(config =>
             {
-                map.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
+                config.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
 
         //Assert
@@ -159,9 +159,9 @@ public class TargetBuilderTests
 
         //Act
         var actor = listItems
-            .To<ListItems, DictionaryItems>(map =>
+            .To<ListItems, DictionaryItems>(config =>
             {
-                map.MapPropertyType(x => x.Items, items =>
+                config.MapPropertyType<ListItems, DictionaryItems, List<string>, Dictionary<int, string>>(x => x.Items, items =>
                 {
                     var dictionary = new Dictionary<int, string>();
                     var counter = 0;
@@ -356,7 +356,10 @@ public class TargetBuilderTests
 
         //Act
         var actor = await listItems
-            .ToAsync<ListItems, DictionaryItems>(config => config.MapPropertyTypeAsync(x => x.Items, GetItemsAsync));
+            .ToAsync<ListItems, DictionaryItems>(config =>
+            {
+                config.MapPropertyTypeAsync<ListItems, DictionaryItems, List<string>, Dictionary<int, string>>(x => x.Items, GetItemsAsync);
+            });
 
         //Assert
         CollectionAssert.AreEqual(expectedValue, actor?.Items);

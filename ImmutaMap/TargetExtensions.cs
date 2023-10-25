@@ -69,7 +69,7 @@ public static partial class TargetExtensions
                                                  Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
     {
         var configuration = new Configuration<T, T>();
-        configuration.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
+        configuration!.MapPropertyType<T, T, TSourcePropertyType, TSourcePropertyType>(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
         return TargetBuilder.GetNewInstance().Build(configuration, t); 
     }
 
@@ -107,7 +107,7 @@ public static partial class TargetExtensions
     /// <param name="source">The obejct this method works against.</param>
     /// <param name="config">Sets mapping configurations inline.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static TTarget? To<TSource, TTarget>(this TSource source, Action<IConfiguration<TSource, TTarget>> config)
+    public static TTarget? To<TSource, TTarget>(this TSource source, Action<Configuration<TSource, TTarget>> config)
     {
         var configuration = new Configuration<TSource, TTarget>();
         config.Invoke(configuration);
@@ -119,7 +119,7 @@ public static partial class TargetExtensions
         return AnonymousMapBuilder.Build(Configuration<T, dynamic>.Empty, t);
     }
 
-    public static dynamic ToDynamic<T>(this T t, Action<IConfiguration<T, dynamic>> config)
+    public static dynamic ToDynamic<T>(this T t, Action<Configuration<T, dynamic>> config)
     {
         var configuration = new Configuration<T, dynamic>();
         config.Invoke(configuration);
@@ -134,11 +134,10 @@ public static partial class TargetExtensions
         return AsyncTargetBuilder.GetNewInstance().BuildAsync(AsyncConfiguration<object, T>.Empty, obj);
     }
 
-    public static Task<TTarget?> ToAsync<TSource, TTarget>(this TSource source, Action<IAsyncConfiguration<TSource, TTarget>> config)
+    public static Task<TTarget?> ToAsync<TSource, TTarget>(this TSource source, Action<AsyncConfiguration<TSource, TTarget>> config)
     {
         var configuration = new AsyncConfiguration<TSource, TTarget>();
         config.Invoke(configuration);
         return AsyncTargetBuilder.GetNewInstance().BuildAsync(configuration, source);
     }
-
 }
