@@ -9,3 +9,8 @@ public interface IConfiguration<TSource, TTarget>
     ICollection<ITransformer> Transformers { get; }
     bool WillNotThrowExceptions { get; set; }
 }
+
+public interface IAsyncConfiguration<TSource, TTarget> : IConfiguration<TSource, TTarget>
+{    
+    ICollection<IAsyncTransformer> AsyncTransformers { get; }
+}

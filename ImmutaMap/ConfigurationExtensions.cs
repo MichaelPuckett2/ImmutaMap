@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.CompilerServices;
+﻿namespace ImmutaMap;
 
-namespace ImmutaMap;
-
- public static class ConfigurationExtensions
+public static partial class ConfigurationExtensions
 {
     /// <summary>
     /// Adds a property name map for cases where property names in the source do not match the name in the target.
@@ -13,10 +10,10 @@ namespace ImmutaMap;
     /// <param name="sourceExpression">Expression to get source property name.</param>
     /// <param name="targetExpression">Expression to get target property name.</param>
     /// <returns>Current Configuration.</returns>
-     public static IConfiguration<TSource, TTarget> MapName<TSource, TTarget, TResult>(
-        this IConfiguration<TSource, TTarget> configuration,
-        Expression<Func<TSource, TResult>> sourceExpression,
-        Expression<Func<TTarget, TResult>> targetExpression)
+    public static IConfiguration<TSource, TTarget> MapName<TSource, TTarget, TResult>(
+       this IConfiguration<TSource, TTarget> configuration,
+       Expression<Func<TSource, TResult>> sourceExpression,
+       Expression<Func<TTarget, TResult>> targetExpression)
     {
         configuration.PropertyNameMaps.Add((sourceExpression.GetMemberName(), targetExpression.GetMemberName()));
         return configuration;
@@ -29,10 +26,10 @@ namespace ImmutaMap;
     /// <param name="sourceExpression">The expression used to get the source property name and value. Invoked on Build()</param>
     /// <param name="propertyResultFunc">The function used to get the target property value. Invoked on Build()</param>
     /// <returns>Current mapConfiguration.</returns>
-     public static IConfiguration<TSource, TTarget> MapPropertyType<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
-        this IConfiguration<TSource, TTarget> configuration,
-        Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
-        Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
+    public static IConfiguration<TSource, TTarget> MapPropertyType<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
+       this IConfiguration<TSource, TTarget> configuration,
+       Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
+       Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
     {
         if (sourceExpression.Body is MemberExpression sourceMemberExpression)
         {
@@ -47,10 +44,10 @@ namespace ImmutaMap;
     /// <typeparam name="TAttribute">The attribute type.</typeparam>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current mapConfiguration.</returns>
-     public static IConfiguration<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(
-        this IConfiguration<TSource, TTarget> configuration,
-        Func<TAttribute, object, object> func)
-        where TAttribute : Attribute
+    public static IConfiguration<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(
+       this IConfiguration<TSource, TTarget> configuration,
+       Func<TAttribute, object, object> func)
+       where TAttribute : Attribute
     {
         var att = new SourceAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
         configuration.Transformers.Add(att);
@@ -66,10 +63,10 @@ namespace ImmutaMap;
     /// <param name="map">The map used in this method.</param>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current Map.</returns>
-     public static IConfiguration<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(
-        this IConfiguration<TSource, TTarget> configuration,
-        Func<TAttribute, object, object> func)
-        where TAttribute : Attribute
+    public static IConfiguration<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(
+       this IConfiguration<TSource, TTarget> configuration,
+       Func<TAttribute, object, object> func)
+       where TAttribute : Attribute
     {
         var att = new TargetAttributeTransformer<TAttribute>(new Func<Attribute, object, object>((attribute, target) => func.Invoke((TAttribute)attribute, target)));
         configuration.Transformers.Add(att);
@@ -91,21 +88,5 @@ namespace ImmutaMap;
         var typeMapping = new SourceTypeTransformer<TType>(typeMapFunc);
         configuration.Transformers.Add(typeMapping);
         return configuration;
-    }
-}
-
-public static class Map
-{
-    public static void AddConfig<TSource, TTarget>(Action<IConfiguration<TSource, TTarget>> config)
-    {
-        var configuration = new Configuration<TSource, TTarget>();
-        config.Invoke(configuration);
-        ConfigurationCache.Add(configuration);
-    }
-
-    //Try Get congifuration from cache
-    public static bool TryGetConfig<TSource, TTarget>(out IConfiguration<TSource, TTarget>? config)
-    {
-        return ConfigurationCache.TryGetConfiguration(out config);
     }
 }

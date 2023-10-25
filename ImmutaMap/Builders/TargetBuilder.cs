@@ -1,10 +1,10 @@
-﻿namespace ImmutaMap;
+﻿namespace ImmutaMap.Builders;
 
 public class TargetBuilder
 {
     private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private readonly ITypeFormatter typeFormatter;
-    private readonly IDictionary<(Type, PropertyInfo), object> mappedValues = new Dictionary<(Type, PropertyInfo), object>();
+    private readonly IDictionary<(Type, PropertyInfo), object> transformedValues = new Dictionary<(Type, PropertyInfo), object>();
 
     /// <summary>
     /// Initializes the Mapper with an ITypeFormatter.
@@ -74,41 +74,41 @@ public class TargetBuilder
 
         foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
         {
-            var mappingFound = false;
-            foreach (var mapping in configuration.Transformers)
+            var isTransformed = false;
+            foreach (var transformer in configuration.Transformers)
             {
-                var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
-                    ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
+                var previouslyTransformedValue = transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
+                    ? transformedValues[(typeof(TSource), sourcePropertyInfo)]
                     : default;
 
-                if (mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
+                if (transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo)))
                 {
-                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, mappedValues[(typeof(TSource), sourcePropertyInfo)], out object result))
+                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, transformedValues[(typeof(TSource), sourcePropertyInfo)], out object transformedValue))
                     {
-                        mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result, configuration);
-                        mappingFound = true;
+                        transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
+                        SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
+                        isTransformed = true;
                     }
                 }
                 else
                 {
-                    if (mapping.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object result))
+                    if (transformer.TryGetValue(source, sourcePropertyInfo, targetPropertyInfo, out object transformedValue))
                     {
-                        mappedValues[(typeof(TSource), sourcePropertyInfo)] = result;
-                        SetTargetValue(target, targetPropertyInfo, result, configuration);
-                        mappingFound = true;
+                        transformedValues[(typeof(TSource), sourcePropertyInfo)] = transformedValue;
+                        SetTargetValue(target, targetPropertyInfo, transformedValue, configuration);
+                        isTransformed = true;
                     }
                 }
             }
-            if (!mappingFound)
+            if (!isTransformed)
             {
-                var previouslyMappedValue = mappedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
-                    ? mappedValues[(typeof(TSource), sourcePropertyInfo)]
+                var previouslyTransformedValue = transformedValues.ContainsKey((typeof(TSource), sourcePropertyInfo))
+                    ? transformedValues[(typeof(TSource), sourcePropertyInfo)]
                     : default;
 
-                if (previouslyMappedValue != default)
+                if (previouslyTransformedValue != default)
                 {
-                    SetTargetValue(target, targetPropertyInfo, previouslyMappedValue, configuration);
+                    SetTargetValue(target, targetPropertyInfo, previouslyTransformedValue, configuration);
                 }
                 else
                 {
@@ -151,10 +151,10 @@ public class TargetBuilder
             backingField?.SetValue(target, targetValue);
         }
 
-        mappedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
+        transformedValues[(typeof(TTarget), targetPropertyInfo)] = targetValue!;
     }
 
-    private void AddPropertyNameMaps<TSource, TResult>(IConfiguration<TSource, TResult> configuration, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
+    private static void AddPropertyNameMaps<TSource, TResult>(IConfiguration<TSource, TResult> configuration, List<PropertyInfo> sourceProperties, List<PropertyInfo> resultProperties, List<(PropertyInfo sourcePropertyInfo, PropertyInfo resultPropertyInfo)> joinedPropertyInfos)
     {
         foreach (var (sourcePropertyMapName, resultPropertyMapName) in configuration.PropertyNameMaps)
         {
@@ -180,7 +180,7 @@ public class TargetBuilder
         }
     }
 
-    private static List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> 
+    private static List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)>
         GetSourceResultProperties<TSource, TTarget>(List<PropertyInfo> sourceProperties,
                                                     List<PropertyInfo> targetProperties,
                                                     IConfiguration<TSource, TTarget> configuration)

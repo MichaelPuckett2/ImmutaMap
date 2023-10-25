@@ -25,7 +25,7 @@ public class TypeFormatter : ITypeFormatter
     }
 
     /// <inheritdoc />
-    public T GetInstance<T>(Func<object[]> args)
+    public T GetInstance<T>(Func<object[]> getArgs)
     {
         T result;
         var hasParameterlessConstructor = typeof(T).GetConstructor(Type.EmptyTypes) != null;
@@ -34,7 +34,7 @@ public class TypeFormatter : ITypeFormatter
             if (hasParameterlessConstructor)
                 result = Activator.CreateInstance<T>();
             else
-                result = (T)Activator.CreateInstance(typeof(T), true, args)!;
+                result = (T)Activator.CreateInstance(typeof(T), true, getArgs.Invoke())!;
         }
         catch
         {

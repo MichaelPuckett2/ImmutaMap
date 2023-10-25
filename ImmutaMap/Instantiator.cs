@@ -1,4 +1,6 @@
-﻿namespace ImmutaMap;
+﻿using ImmutaMap.Builders;
+
+namespace ImmutaMap;
 
 public static class Instantiator
 {

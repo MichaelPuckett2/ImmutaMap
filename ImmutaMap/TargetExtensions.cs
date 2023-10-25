@@ -1,6 +1,8 @@
-﻿namespace ImmutaMap;
+﻿using ImmutaMap.Builders;
 
-public static class TargetExtensions
+namespace ImmutaMap;
+
+public static partial class TargetExtensions
 {
     /// <summary>
     /// A quick update of a Type using an anonymous type to get the values to use.
@@ -31,10 +33,10 @@ public static class TargetExtensions
     /// <param name="Map">Map that can be supplied to mapping.</param>
     /// <param name="throwExceptions">Options value that determines if exceptions will be thrown or handled silently.  Default is true to throw exceptoipns.</param>
     /// <returns>Instantiated T target value.</returns>
-    public static T? With<T>(this T t, dynamic a, Action<IConfiguration<T, T>> mapAction)
+    public static T? With<T>(this T t, dynamic a, Action<IConfiguration<T, T>> config)
     {
         var configuration = new Configuration<T, T>();
-        mapAction.Invoke(configuration);
+        config.Invoke(configuration);
         var properties = new List<(string Name, object Value)>();
         foreach (var prop in a.GetType().GetProperties())
         {
@@ -45,11 +47,11 @@ public static class TargetExtensions
         return TargetBuilder.GetNewInstance().Build(configuration, t);
     }
 
-    public static T? With<T>(this T source, Action<IConfiguration<T, T>> mapAction)
+    public static T? With<T>(this T source, Action<IConfiguration<T, T>> config)
         where T : notnull
     {
         var configuration = new Configuration<T, T>();
-        mapAction.Invoke(configuration);
+        config.Invoke(configuration);
         return TargetBuilder.GetNewInstance().Build(configuration, source);
     }
 
@@ -103,12 +105,12 @@ public static class TargetExtensions
     /// </summary>
     /// <typeparam name="T">The type to map to.</typeparam>
     /// <param name="source">The obejct this method works against.</param>
-    /// <param name="mapAction">Sets mapping configurations inline.</param>
+    /// <param name="config">Sets mapping configurations inline.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static TTarget? To<TSource, TTarget>(this TSource source, Action<IConfiguration<TSource, TTarget>> mapAction)
+    public static TTarget? To<TSource, TTarget>(this TSource source, Action<IConfiguration<TSource, TTarget>> config)
     {
         var configuration = new Configuration<TSource, TTarget>();
-        mapAction.Invoke(configuration);
+        config.Invoke(configuration);
         return TargetBuilder.GetNewInstance().Build(configuration, source);
     }
 
@@ -117,10 +119,26 @@ public static class TargetExtensions
         return AnonymousMapBuilder.Build(Configuration<T, dynamic>.Empty, t);
     }
 
-    public static dynamic ToDynamic<T>(this T t, Action<IConfiguration<T, dynamic>> mapAction)
+    public static dynamic ToDynamic<T>(this T t, Action<IConfiguration<T, dynamic>> config)
     {
         var configuration = new Configuration<T, dynamic>();
-        mapAction.Invoke(configuration);
+        config.Invoke(configuration);
         return AnonymousMapBuilder.Build(configuration, t);
     }
+}
+
+public static partial class TargetExtensions
+{
+    public static Task<T?> ToAsync<T>(this object obj)
+    {
+        return AsyncTargetBuilder.GetNewInstance().BuildAsync(AsyncConfiguration<object, T>.Empty, obj);
+    }
+
+    public static Task<TTarget?> ToAsync<TSource, TTarget>(this TSource source, Action<IAsyncConfiguration<TSource, TTarget>> config)
+    {
+        var configuration = new AsyncConfiguration<TSource, TTarget>();
+        config.Invoke(configuration);
+        return AsyncTargetBuilder.GetNewInstance().BuildAsync(configuration, source);
+    }
+
 }

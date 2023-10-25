@@ -32,3 +32,9 @@ public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
     /// </summary>
     public static IConfiguration<TSource, TTarget> Empty { get; } = new Configuration<TSource, TTarget>();
 }
+
+public class AsyncConfiguration<TSource, TTarget> : Configuration<TSource, TTarget>, IAsyncConfiguration<TSource, TTarget>
+{
+    public ICollection<IAsyncTransformer> AsyncTransformers { get; } = new Collection<IAsyncTransformer>();
+    public static new IAsyncConfiguration<TSource, TTarget> Empty { get; } = new AsyncConfiguration<TSource, TTarget>();
+}

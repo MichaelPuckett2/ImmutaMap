@@ -235,22 +235,22 @@ public class TargetBuilderTests
         //Arrange
         var actor = new List<MessageDto>
         {
-            new MessageDto{ Msg = "Mock1", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
-            new MessageDto{ Msg = "Mock2", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
-            new MessageDto{ Msg = "Mock3", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
+            new MessageDto{ Msg = "Mock1", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)), Modified = DateTime.UtcNow },
+            new MessageDto{ Msg = "Mock2", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)), Modified = DateTime.UtcNow },
+            new MessageDto{ Msg = "Mock3", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)), Modified = DateTime.UtcNow },
         };
 
         var expected = new List<Message>
         {
-            new Message(actor[0].Msg, actor[0].TimeStamp.ToLocalTime()),
-            new Message(actor[1].Msg, actor[1].TimeStamp.ToLocalTime()),
-            new Message(actor[2].Msg, actor[2].TimeStamp.ToLocalTime())
+            new Message(actor[0].Msg, actor[0].TimeStamp.ToLocalTime(), actor[0].Modified.ToLocalTime()),
+            new Message(actor[1].Msg, actor[1].TimeStamp.ToLocalTime(), actor[1].Modified.ToLocalTime()),
+            new Message(actor[2].Msg, actor[2].TimeStamp.ToLocalTime(), actor[2].Modified.ToLocalTime())
         };
 
         //Act
         var actual = actor.Select(x => x.To<MessageDto, Message>(map =>
         {
-            map.MapType<MessageDto, Message, DateTime>((datetime) => datetime.ToLocalTime());
+            map.MapType<MessageDto, Message, DateTime>(datetime => datetime.ToLocalTime());
         })).ToList();
 
         //Assert
@@ -290,5 +290,75 @@ public class TargetBuilderTests
         Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
         Assert.AreEqual(personClass.LastName, actor?.LastName);
         Assert.AreEqual(personClass.Age, actor?.Age);
+    }
+
+    [TestMethod]
+    public async Task TestToAsyncExtension()
+    {
+        //Arrange
+        var count = 0;
+        async Task<int> GetCountAsync()
+        {
+            await Task.Delay(1);
+            count++;
+            await Task.Delay(1);
+            return count;
+        }
+
+        var actors = new List<CounterClass>
+        {
+            new CounterClass{ Count = count++ },
+            new CounterClass{ Count = count++ },
+            new CounterClass{ Count = count++ }
+        };
+
+        var actuals = new List<Counter>();
+
+        //Act
+        foreach (var actor in actors)
+        {
+            var actual = await actor.ToAsync<CounterClass, Counter>(config =>
+            {
+                config.MapTypeAsync<CounterClass, Counter, int>(async x => await GetCountAsync());
+            });
+            actuals.Add(actual!);
+        }
+
+        //Assert
+        Assert.AreEqual(4, actuals[0].Count);
+        Assert.AreEqual(5, actuals[1].Count);
+        Assert.AreEqual(6, actuals[2].Count);
+    }
+
+    [TestMethod]
+    public async Task TestAsyncPropertyTypeExtension()
+    {
+        //Arrange
+        var listItems = new ListItems(new() { "Mock1", "Mock2" });
+        var expectedValue = new Dictionary<int, string>
+        {
+            [1] = "Mock1",
+            [2] = "Mock2"
+        };
+
+        async ValueTask<Dictionary<int, string>> GetItemsAsync(List<string> items)
+        {
+            await Task.Delay(1);
+            var dictionary = new Dictionary<int, string>();
+            var counter = 0;
+            foreach (var item in items)
+            {
+                dictionary.Add(++counter, item);
+            }
+            await Task.Delay(1);
+            return dictionary;
+        }
+
+        //Act
+        var actor = await listItems
+            .ToAsync<ListItems, DictionaryItems>(config => config.MapPropertyTypeAsync(x => x.Items, GetItemsAsync));
+
+        //Assert
+        CollectionAssert.AreEqual(expectedValue, actor?.Items);
     }
 }
