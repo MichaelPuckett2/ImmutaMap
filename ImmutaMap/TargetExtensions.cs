@@ -1,6 +1,6 @@
 ﻿namespace ImmutaMap;
 
-public static class MappingExtensions
+public static class TargetExtensions
 {
     /// <summary>
     /// A quick update of a Type using an anonymous type to get the values to use.
@@ -19,7 +19,7 @@ public static class MappingExtensions
         }
         var configuration = Configuration<T, T>.Empty;
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, t);
+        return TargetBuilder.GetNewInstance().Build(configuration, t);
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public static class MappingExtensions
             if (foundProp != null) properties.Add((prop.Name, prop.GetValue(a, null)));
         }
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, t);
+        return TargetBuilder.GetNewInstance().Build(configuration, t);
     }
 
     public static T? With<T>(this T source, Action<IConfiguration<T, T>> mapAction)
@@ -50,7 +50,7 @@ public static class MappingExtensions
     {
         var configuration = new Configuration<T, T>();
         mapAction.Invoke(configuration);
-        return MapBuilder.GetNewInstance().Build(configuration, source);
+        return TargetBuilder.GetNewInstance().Build(configuration, source);
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public static class MappingExtensions
     {
         var configuration = new Configuration<T, T>();
         configuration.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
-        return MapBuilder.GetNewInstance().Build(configuration, t); 
+        return TargetBuilder.GetNewInstance().Build(configuration, t); 
     }
 
     /// <summary>
@@ -93,9 +93,9 @@ public static class MappingExtensions
     /// <typeparam name="T">The type to map to.</typeparam>
     /// <param name="obj">The obejct this method works against.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static T? As<T>(this object obj)
+    public static T? To<T>(this object obj)
     {
-        return MapBuilder.GetNewInstance().Build(Configuration<object, T>.Empty, obj);
+        return TargetBuilder.GetNewInstance().Build(Configuration<object, T>.Empty, obj);
     }
 
     /// <summary>
@@ -105,22 +105,22 @@ public static class MappingExtensions
     /// <param name="source">The obejct this method works against.</param>
     /// <param name="mapAction">Sets mapping configurations inline.</param>
     /// <returns>Returns an instantiated T with the values from the object used as reference.</returns>
-    public static TTarget? As<TSource, TTarget>(this TSource source, Action<Configuration<TSource, TTarget>> mapAction)
+    public static TTarget? To<TSource, TTarget>(this TSource source, Action<IConfiguration<TSource, TTarget>> mapAction)
     {
         var configuration = new Configuration<TSource, TTarget>();
         mapAction.Invoke(configuration);
-        return MapBuilder.GetNewInstance().Build(configuration, source);
+        return TargetBuilder.GetNewInstance().Build(configuration, source);
     }
 
-    public static dynamic? AsDynamic<T>(this T t)
+    public static dynamic ToDynamic<T>(this T t)
     {
-        return new AnonymousMapBuilder().Build(Configuration<T, dynamic>.Empty, t);
+        return AnonymousMapBuilder.Build(Configuration<T, dynamic>.Empty, t);
     }
 
-    public static dynamic AsDynamic<T>(this T t, Action<Configuration<T, dynamic>> mapAction)
+    public static dynamic ToDynamic<T>(this T t, Action<IConfiguration<T, dynamic>> mapAction)
     {
         var configuration = new Configuration<T, dynamic>();
         mapAction.Invoke(configuration);
-        return new AnonymousMapBuilder().Build(configuration, t);
+        return AnonymousMapBuilder.Build(configuration, t);
     }
 }

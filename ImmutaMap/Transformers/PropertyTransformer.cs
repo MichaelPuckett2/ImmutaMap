@@ -26,11 +26,8 @@ public class PropertyTransformer<TSourcePropertyType, TTargetPropertyType> : ITr
             result = targetValue;
             return true;
         }
-        else
-        {
-            result = default!;
-            return false;
-        }
+        result = default!;
+        return false;
     }
 
     /// <inheritdoc />
@@ -47,10 +44,7 @@ public class PropertyTransformer<TSourcePropertyType, TTargetPropertyType> : ITr
             result = targetValue;
             return true;
         }
-        else
-        {
-            result = default!;
-            return false;
-        }
+        result = default!;
+        return false;
     }
 }

@@ -14,7 +14,7 @@ public static class Instantiator
         var configuration = new Configuration<T, T>();
         mapAction.Invoke(configuration);
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, target);
+        return TargetBuilder.GetNewInstance().Build(configuration, target);
     }
 
     public static T? New<T>() where T : class
@@ -23,6 +23,6 @@ public static class Instantiator
         var properties = new List<(string Name, object Value)>();
         var configuration = new Configuration<T, T>();
         foreach (var (Name, Value) in properties) configuration.Transformers.Add(new DynamicTransformer(Value.GetType(), Name, () => Value));
-        return MapBuilder.GetNewInstance().Build(configuration, target);
+        return TargetBuilder.GetNewInstance().Build(configuration, target);
     }
 }

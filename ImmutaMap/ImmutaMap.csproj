@@ -13,17 +13,11 @@
 		<RepositoryUrl>https://github.com/MichaelPuckett2/ImmutaMap</RepositoryUrl>
 		<Company>TripleG3</Company>
 		<Authors>Michael Puckett, II</Authors>
-		<Version>8.0.1</Version>
+		<Version>8.2.0</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Compile Remove="ReflectionTools\**" />
-		<EmbeddedResource Remove="ReflectionTools\**" />
-		<None Remove="ReflectionTools\**" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\LICENSE">
@@ -38,6 +32,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 		<PackageReference Include="TripleG3.ExpressionExtensions" Version="7.0.0" />
 	</ItemGroup>
 

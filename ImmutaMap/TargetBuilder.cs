@@ -1,6 +1,6 @@
 ﻿namespace ImmutaMap;
 
-public class MapBuilder
+public class TargetBuilder
 {
     private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private readonly ITypeFormatter typeFormatter;
@@ -10,7 +10,7 @@ public class MapBuilder
     /// Initializes the Mapper with an ITypeFormatter.
     /// </summary>
     /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
-    MapBuilder(ITypeFormatter typeFormatter)
+    TargetBuilder(ITypeFormatter typeFormatter)
     {
         this.typeFormatter = typeFormatter;
     }
@@ -19,14 +19,14 @@ public class MapBuilder
     /// A simpler instantiation that allows for quick fluent designing.
     /// </summary>
     /// <returns>A new Mapper used to map and instantiate the maps target.</returns>
-    public static MapBuilder GetNewInstance() => new(ITypeFormatter.Default);
+    public static TargetBuilder GetNewInstance() => new(ITypeFormatter.Default);
 
     /// <summary>
     /// A simpler instantiation that allows for quick fluent designing.
     /// </summary>
     /// <param name="typeFormatter">The ITypeFormatter is used to instantiate all types during the Build method.</param>
     /// <returns>A new Mapper used to map and instantiate the maps target.</returns>
-    public static MapBuilder GetNewInstance(ITypeFormatter typeFormatter) => new(typeFormatter);
+    public static TargetBuilder GetNewInstance(ITypeFormatter typeFormatter) => new(typeFormatter);
 
     /// <summary>
     /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
@@ -69,7 +69,7 @@ public class MapBuilder
             ? typeof(TSource).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList()
             : source.GetType().GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
         var targetPropertyInfos = typeof(TTarget).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList();
-        var joinedPropertyInfos = GetSourceResultProperties<TSource, TTarget>(sourcePropertyInfos, targetPropertyInfos, configuration);
+        var joinedPropertyInfos = GetSourceResultProperties(sourcePropertyInfos, targetPropertyInfos, configuration);
         AddPropertyNameMaps(configuration, sourcePropertyInfos, targetPropertyInfos, joinedPropertyInfos);
 
         foreach (var (sourcePropertyInfo, targetPropertyInfo) in joinedPropertyInfos)
@@ -180,7 +180,7 @@ public class MapBuilder
         }
     }
 
-    private List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> 
+    private static List<(PropertyInfo sourceProperty, PropertyInfo resultProperty)> 
         GetSourceResultProperties<TSource, TTarget>(List<PropertyInfo> sourceProperties,
                                                     List<PropertyInfo> targetProperties,
                                                     IConfiguration<TSource, TTarget> configuration)

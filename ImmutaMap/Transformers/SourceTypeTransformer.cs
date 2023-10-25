@@ -1,42 +1,36 @@
 ﻿namespace ImmutaMap.Transformers;
 
 /// <inheritdoc />
-public class SourceTypeTransformer : ITransformer
+public class SourceTypeTransformer<T> : ITransformer
 {
-    private readonly Type type;
-    private readonly Func<object, object> typeMapFunc;
+    private readonly Func<T, object?> typeMapFunc;
 
-    public SourceTypeTransformer(Type type, Func<object, object> typeMapFunc)
+    public SourceTypeTransformer(Func<T, object?> typeMapFunc)
     {
-        this.type = type;
         this.typeMapFunc = typeMapFunc;
     }
 
     /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, out object result)
     {
-        if (sourcePropertyInfo.PropertyType != type)
+        if (sourcePropertyInfo.PropertyType != typeof(T))
         {
             result = default!;
             return false;
         }
-
-        result = typeMapFunc.Invoke(sourcePropertyInfo.GetValue(source)!);
-
+        result = typeMapFunc.Invoke((T)sourcePropertyInfo.GetValue(source)!)!;
         return true;
     }
 
     /// <inheritdoc />
     public bool TryGetValue<TSource>(TSource source, PropertyInfo sourcePropertyInfo, PropertyInfo targetPropertyInfo, object previouslyMappedValue, out object result)
     {
-        if (sourcePropertyInfo.PropertyType != type)
+        if (sourcePropertyInfo.PropertyType != typeof(T))
         {
             result = default!;
             return false;
         }
-
-        result = typeMapFunc.Invoke(previouslyMappedValue);
-
+        result = typeMapFunc.Invoke((T)previouslyMappedValue)!;
         return true;
     }
 }

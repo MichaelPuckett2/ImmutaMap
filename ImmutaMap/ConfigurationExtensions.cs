@@ -1,15 +1,19 @@
-﻿namespace ImmutaMap;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.CompilerServices;
+
+namespace ImmutaMap;
 
  public static class ConfigurationExtensions
 {
     /// <summary>
     /// Adds a property name map for cases where property names in the source do not match the name in the target.
+    /// Ex: MapProperty(x => x.Id, x => x.Identifier) will map the source property "Id" to the target property "Identifier".
     /// </summary>
     /// <typeparam name="TResult">Property result value Type.</typeparam>
-    /// <param name="sourceExpression">Expression to gain source property name.</param>
-    /// <param name="targetExpression">Expression to gain target property name.</param>
-    /// <returns>Current MapConfiguration.</returns>
-     public static IConfiguration<TSource, TTarget> MapProperty<TSource, TTarget, TResult>(
+    /// <param name="sourceExpression">Expression to get source property name.</param>
+    /// <param name="targetExpression">Expression to get target property name.</param>
+    /// <returns>Current Configuration.</returns>
+     public static IConfiguration<TSource, TTarget> MapName<TSource, TTarget, TResult>(
         this IConfiguration<TSource, TTarget> configuration,
         Expression<Func<TSource, TResult>> sourceExpression,
         Expression<Func<TTarget, TResult>> targetExpression)
@@ -73,17 +77,35 @@
     }
 
     /// <summary>
-    /// Maps a type from source property.
+    /// Maps all property types to a given result value.
+    /// Ex: MapType<MessageDto, Message, DateTime>((datetime) => datetime.ToLocalTime())
+    ///  will map all DateTime properties on MessageDto to the local time value when building Message.
     /// </summary>
     /// <typeparam name="TType">The source property type being mapped.</typeparam>
     /// <param name="typeMapFunc">The function used to get the result value.</param>
     /// <returns>Current Map.</returns>
-     public static IConfiguration<TSource, TTarget> MapType<TSource, TTarget, TType>(
+    public static IConfiguration<TSource, TTarget> MapType<TSource, TTarget, TType>(
         this IConfiguration<TSource, TTarget> configuration,
-        Func<object, object> typeMapFunc)
+        Func<TType, object> typeMapFunc)
     {
-        var typeMapping = new SourceTypeTransformer(typeof(TType), typeMapFunc);
+        var typeMapping = new SourceTypeTransformer<TType>(typeMapFunc);
         configuration.Transformers.Add(typeMapping);
         return configuration;
+    }
+}
+
+public static class Map
+{
+    public static void AddConfig<TSource, TTarget>(Action<IConfiguration<TSource, TTarget>> config)
+    {
+        var configuration = new Configuration<TSource, TTarget>();
+        config.Invoke(configuration);
+        ConfigurationCache.Add(configuration);
+    }
+
+    //Try Get congifuration from cache
+    public static bool TryGetConfig<TSource, TTarget>(out IConfiguration<TSource, TTarget>? config)
+    {
+        return ConfigurationCache.TryGetConfiguration(out config);
     }
 }

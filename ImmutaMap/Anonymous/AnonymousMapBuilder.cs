@@ -4,8 +4,6 @@ namespace ImmutaMap.Anonymous;
 public class AnonymousMapBuilder
 {
     private const BindingFlags PropertyBindingFlag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-    private bool willNotThrowExceptions;
-    private bool ignoreCase;
 
     /// <summary>
     /// Builds the target value from the source value using the default mappings and any custom mappings put in place.
@@ -14,15 +12,13 @@ public class AnonymousMapBuilder
     /// <typeparam name="TTarget">The target type mapped to.</typeparam>
     /// <param name="mapper">The Map used to build.</param>
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
-    public dynamic Build<TSource, TTarget>(Configuration<TSource, TTarget> map, TSource source)
+    public static dynamic Build<TSource, TTarget>(IConfiguration<TSource, TTarget> map, TSource source)
     {
-        willNotThrowExceptions = map.WillNotThrowExceptions;
-        ignoreCase = map.IgnoreCase;
-        var target = InstantiateAnonymous(map, source);
+        var target = AnonymousMapBuilder.InstantiateAnonymous(map, source);
         return target;
     }
 
-    private dynamic InstantiateAnonymous<TSource, TTarget>(Configuration<TSource, TTarget> map, TSource source)
+    private static dynamic InstantiateAnonymous<TSource, TTarget>(IConfiguration<TSource, TTarget> map, TSource source)
     {
         var sourcePropertyInfos = source == null
             ? typeof(TSource).GetType().GetProperties(PropertyBindingFlag)

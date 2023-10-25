@@ -30,5 +30,5 @@ public class Configuration<TSource, TTarget> : IConfiguration<TSource, TTarget>
     /// <summary>
     /// Static empty Map.
     /// </summary>
-    public static Configuration<TSource, TTarget> Empty { get; } = new Configuration<TSource, TTarget>();
+    public static IConfiguration<TSource, TTarget> Empty { get; } = new Configuration<TSource, TTarget>();
 }

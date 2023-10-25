@@ -3,26 +3,26 @@ using ImmutaMap.Transformers;
 namespace ImmutaMap.Test;
 
 [TestClass]
-public class MapTests
+public class TargetBuilderTests
 {
     [TestMethod]
-    public void TestWithMapping()
+    public void TestWithExtension()
     {
         //Arrange
-        var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
+        var actor = new PersonClass("FirstMock1", "LastMock1", 50);
         const string ExpectedFirstName = "FirstMock2";
 
         //Act
-        var actor = personClass.With(x => x.FirstName, ExpectedFirstName);
+        var actual = actor.With(x => x.FirstName, ExpectedFirstName);
 
         //Assert
-        Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
-        Assert.AreEqual(personClass.LastName, actor?.LastName);
-        Assert.AreEqual(personClass.Age, actor?.Age);
+        Assert.AreEqual(ExpectedFirstName, actual?.FirstName);
+        Assert.AreEqual(actor.LastName, actual?.LastName);
+        Assert.AreEqual(actor.Age, actual?.Age);
     }
 
     [TestMethod]
-    public void TestWithPropertyValueMapping()
+    public void TestWithPropertyValueExtension()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock", "LastMock1", 50);
@@ -38,7 +38,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestWithDynamicMapping()
+    public void TestWithDynamicExtension()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
@@ -54,13 +54,13 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestAsMapping()
+    public void TestToExtension()
     {
         //Arrange
         var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
 
         //Act
-        var actor = personRecord.As<PersonClass>();
+        var actor = personRecord.To<PersonClass>();
 
         //Assert
         Assert.AreEqual(personRecord.FirstName, actor?.FirstName);
@@ -69,16 +69,16 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestPropertyNameAsMapping()
+    public void TestPropertyNameAsExtension()
     {
         //Arrange
         var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClassLastNameSpelledDifferent>(map =>
+            .To<PersonRecord, PersonClassLastNameSpelledDifferent>(map =>
             {
-                map.MapProperty(x => x.LastName, x => x.Last_Name);
+                map.MapName(x => x.LastName, x => x.Last_Name);
             });
 
         //Assert
@@ -88,7 +88,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestSourceAttibuteWithPropertyMapping()
+    public void TestSourceAttibuteWithPropertyExtension()
     {
         //Arrange
         var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
@@ -96,7 +96,7 @@ public class MapTests
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClass>(map =>
+            .To<PersonRecord, PersonClass>(map =>
             {
                 map.MapSourceAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
@@ -108,7 +108,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestTargetAttibuteWithPropertyMapping()
+    public void TestTargetAttibuteWithPropertyExtension()
     {
         //Arrange
         var personRecord = new PersonRecord("FirstMock1", "LastMock1", 50);
@@ -116,7 +116,7 @@ public class MapTests
 
         //Act
         var actor = personRecord
-            .As<PersonRecord, PersonClass>(config =>
+            .To<PersonRecord, PersonClass>(config =>
             {
                 config.MapTargetAttribute<PersonRecord, PersonClass, FirstNameAttribute>((attribute, value) => attribute.RealName);
             });
@@ -128,14 +128,14 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestTargetTrimAttibuteMapping()
+    public void TestTargetTrimAttibuteExtension()
     {
         //Arrange
         var personRecord = new PersonRecord(" FirstMock1   ", "LastMock1", 50);
         const string expectedValue = "FirstMock1";
 
         //Act
-        var actor = personRecord.As<PersonRecord, PersonClass>(map =>
+        var actor = personRecord.To<PersonRecord, PersonClass>(map =>
         {
             map.MapTargetAttribute<PersonRecord, PersonClass, TrimAttribute>((attribute, value) => value is string str ? str.Trim() : value);
         });
@@ -147,7 +147,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestPropertyTypeMapping()
+    public void TestPropertyTypeExtension()
     {
         //Arrange
         var listItems = new ListItems(new() { "Mock1", "Mock2" });
@@ -159,7 +159,7 @@ public class MapTests
 
         //Act
         var actor = listItems
-            .As<ListItems, DictionaryItems>(map =>
+            .To<ListItems, DictionaryItems>(map =>
             {
                 map.MapPropertyType(x => x.Items, items =>
                 {
@@ -174,11 +174,11 @@ public class MapTests
             });
 
         //Assert
-        CollectionAssert.AreEqual(expectedValue, actor.Items);
+        CollectionAssert.AreEqual(expectedValue, actor?.Items);
     }
 
     [TestMethod]
-    public void TestAsAndWithMapping()
+    public void TestToAndWithExtension()
     {
         //Arrange
         var person = new PersonClass("FirstMock1", "LastMock1", 50);
@@ -186,7 +186,7 @@ public class MapTests
 
         //Act
         var actor = person
-            .As<EmployeeRecord>()
+            .To<EmployeeRecord>()
             .With(x => x.FullName, fullName => $"{person.FirstName} {person.LastName}");
 
         //Assert
@@ -194,7 +194,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestAsAndWithDynamicMapping()
+    public void TestToAndWithDynamicExtension()
     {
         //Arrange
         var person = new PersonClass("FirstMock1", "LastMock1", 50);
@@ -202,7 +202,7 @@ public class MapTests
 
         //Act
         var actor = person
-            .As<EmployeeRecord>()
+            .To<EmployeeRecord>()
             .With(new { FullName = $"{person.FirstName} {person.LastName}" });
 
         //Assert
@@ -210,7 +210,7 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestCustomMapping()
+    public void TestCustomExtension()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
@@ -218,7 +218,7 @@ public class MapTests
         const string ExpectedLastName = "LASTMOCK1";
 
         //Act
-        var actor = personClass.As<PersonClass, PersonRecord>(config =>
+        var actor = personClass.To<PersonClass, PersonRecord>(config =>
         {
             config.Transformers.Add(new UpperCaseTransformer());
         });
@@ -230,14 +230,42 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestAsAnonymous()
+    public void TestMapTypeExtensions()
+    {
+        //Arrange
+        var actor = new List<MessageDto>
+        {
+            new MessageDto{ Msg = "Mock1", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
+            new MessageDto{ Msg = "Mock2", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
+            new MessageDto{ Msg = "Mock3", TimeStamp = DateTime.UtcNow.Subtract(TimeSpan.FromHours(4)) },
+        };
+
+        var expected = new List<Message>
+        {
+            new Message(actor[0].Msg, actor[0].TimeStamp.ToLocalTime()),
+            new Message(actor[1].Msg, actor[1].TimeStamp.ToLocalTime()),
+            new Message(actor[2].Msg, actor[2].TimeStamp.ToLocalTime())
+        };
+
+        //Act
+        var actual = actor.Select(x => x.To<MessageDto, Message>(map =>
+        {
+            map.MapType<MessageDto, Message, DateTime>((datetime) => datetime.ToLocalTime());
+        })).ToList();
+
+        //Assert
+        CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [TestMethod]
+    public void TestToDynamicExtension()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
         const string ExpectedFirstName = "FirstMock1";
 
         //Act
-        var actor = personClass.AsDynamic();
+        var actor = personClass.ToDynamic();
 
         //Assert
         Assert.AreEqual(ExpectedFirstName, actor?.FirstName);
@@ -246,14 +274,14 @@ public class MapTests
     }
 
     [TestMethod]
-    public void TestAsAnonymousMap()
+    public void TestToDynamicConfiguredExtension()
     {
         //Arrange
         var personClass = new PersonClass("FirstMock1", "LastMock1", 50);
         const string ExpectedFirstName = "FirstMock1";
 
         //Act
-        var actor = personClass.AsDynamic(map =>
+        var actor = personClass.ToDynamic(map =>
         {
             map.Skips.Add((x) => x.FirstName);
         });
