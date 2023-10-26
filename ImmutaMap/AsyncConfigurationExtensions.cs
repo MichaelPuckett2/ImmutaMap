@@ -2,8 +2,8 @@
 
 public static partial class ConfigurationExtensions
 {
-    public static AsyncConfiguration<TSource, TTarget> MapTypeAsync<TSource, TTarget, TType>(
-    this AsyncConfiguration<TSource, TTarget> configuration,
+    public static ITransformAsync MapTypeAsync<TType>(
+    this ITransformAsync configuration,
     Func<TType, Task<object?>> typeMapFunc)
     {
         var typeMapping = new AsyncSourceTypeTransformer<TType>(typeMapFunc);

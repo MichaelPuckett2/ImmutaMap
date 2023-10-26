@@ -250,7 +250,7 @@ public class TargetBuilderTests
         //Act
         var actual = actor.Select(x => x.To<MessageDto, Message>(map =>
         {
-            map.MapType<MessageDto, Message, DateTime>(datetime => datetime.ToLocalTime());
+            map.MapType<DateTime>(datetime => datetime.ToLocalTime());
         })).ToList();
 
         //Assert
@@ -319,7 +319,7 @@ public class TargetBuilderTests
         {
             var actual = await actor.ToAsync<CounterClass, Counter>(config =>
             {
-                config.MapTypeAsync<CounterClass, Counter, int>(async x => await GetCountAsync());
+                config.MapTypeAsync<int>(async x => await GetCountAsync());
             });
             actuals.Add(actual!);
         }

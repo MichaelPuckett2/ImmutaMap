@@ -81,12 +81,12 @@ public static partial class ConfigurationExtensions
     /// <typeparam name="TType">The source property type being mapped.</typeparam>
     /// <param name="typeMapFunc">The function used to get the result value.</param>
     /// <returns>Current Map.</returns>
-    public static Configuration<TSource, TTarget> MapType<TSource, TTarget, TType>(
-        this Configuration<TSource, TTarget> configuration,
+    public static ITransform MapType<TType>(
+        this ITransform transform,
         Func<TType, object> typeMapFunc)
     {
         var typeMapping = new SourceTypeTransformer<TType>(typeMapFunc);
-        configuration.Transformers.Add(typeMapping);
-        return configuration;
+        transform.Transformers.Add(typeMapping);
+        return transform;
     }
 }
