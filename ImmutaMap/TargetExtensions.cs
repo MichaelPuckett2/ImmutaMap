@@ -69,7 +69,7 @@ public static partial class TargetExtensions
                                                  Func<TSourcePropertyType, TSourcePropertyType> valueFunc)
     {
         var configuration = new Configuration<T, T>();
-        configuration!.MapPropertyType<T, T, TSourcePropertyType, TSourcePropertyType>(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
+        configuration!.MapPropertyType(sourceExpression, (value) => valueFunc.Invoke(sourceExpression.Compile().Invoke(t))!);
         return TargetBuilder.GetNewInstance().Build(configuration, t); 
     }
 

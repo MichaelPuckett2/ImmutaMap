@@ -26,16 +26,16 @@ public static partial class ConfigurationExtensions
     /// <param name="sourceExpression">The expression used to get the source property name and value. Invoked on Build()</param>
     /// <param name="propertyResultFunc">The function used to get the target property value. Invoked on Build()</param>
     /// <returns>Current mapConfiguration.</returns>
-    public static ITransform MapPropertyType<TSource, TTarget, TSourcePropertyType, TTargetPropertyType>(
-       this ITransform transform,
+    public static Configuration<TSource, TTarget> MapPropertyType<TSource, TTarget, TSourcePropertyType>(
+       this Configuration<TSource, TTarget> configuration,
        Expression<Func<TSource, TSourcePropertyType>> sourceExpression,
-       Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
+       Func<TSourcePropertyType, object> propertyResultFunc)
     {
         if (sourceExpression.Body is MemberExpression sourceMemberExpression)
         {
-            transform.Transformers.Add(new PropertyTransformer<TSourcePropertyType, TTargetPropertyType>(sourceMemberExpression.Member.Name, propertyResultFunc));
+            configuration.Transformers.Add(new PropertyTransformer<TSourcePropertyType>(sourceMemberExpression.Member.Name, propertyResultFunc));
         }
-        return transform;
+        return configuration;
     }
 
     /// <summary>
@@ -44,8 +44,8 @@ public static partial class ConfigurationExtensions
     /// <typeparam name="TAttribute">The attribute type.</typeparam>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current mapConfiguration.</returns>
-    public static ITransform MapSourceAttribute<TSource, TTarget, TAttribute>(
-       this ITransform configuration,
+    public static Configuration<TSource, TTarget> MapSourceAttribute<TSource, TTarget, TAttribute>(
+       this Configuration<TSource, TTarget> configuration,
        Func<TAttribute, object, object> func)
        where TAttribute : Attribute
     {
@@ -63,8 +63,8 @@ public static partial class ConfigurationExtensions
     /// <param name="map">The map used in this method.</param>
     /// <param name="func">The function defined to work on the attribute mapping. Passes the attribute found, the source value, and expects the target value in return.</param>
     /// <returns>Current Map.</returns>
-    public static ITransform MapTargetAttribute<TSource, TTarget, TAttribute>(
-       this ITransform configuration,
+    public static Configuration<TSource, TTarget> MapTargetAttribute<TSource, TTarget, TAttribute>(
+       this Configuration<TSource, TTarget> configuration,
        Func<TAttribute, object, object> func)
        where TAttribute : Attribute
     {
@@ -81,8 +81,8 @@ public static partial class ConfigurationExtensions
     /// <typeparam name="TType">The source property type being mapped.</typeparam>
     /// <param name="typeMapFunc">The function used to get the result value.</param>
     /// <returns>Current Map.</returns>
-    public static ITransform MapType<TSource, TTarget, TType>(
-        this ITransform configuration,
+    public static Configuration<TSource, TTarget> MapType<TSource, TTarget, TType>(
+        this Configuration<TSource, TTarget> configuration,
         Func<TType, object> typeMapFunc)
     {
         var typeMapping = new SourceTypeTransformer<TType>(typeMapFunc);

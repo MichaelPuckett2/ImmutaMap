@@ -161,7 +161,7 @@ public class TargetBuilderTests
         var actor = listItems
             .To<ListItems, DictionaryItems>(config =>
             {
-                config.MapPropertyType<ListItems, DictionaryItems, List<string>, Dictionary<int, string>>(x => x.Items, items =>
+                config.MapPropertyType(x => x.Items, items =>
                 {
                     var dictionary = new Dictionary<int, string>();
                     var counter = 0;
@@ -341,7 +341,7 @@ public class TargetBuilderTests
             [2] = "Mock2"
         };
 
-        async ValueTask<Dictionary<int, string>> GetItemsAsync(List<string> items)
+        async ValueTask<object> GetItemsAsync(List<string> items)
         {
             await Task.Delay(1);
             var dictionary = new Dictionary<int, string>();
@@ -358,7 +358,7 @@ public class TargetBuilderTests
         var actor = await listItems
             .ToAsync<ListItems, DictionaryItems>(config =>
             {
-                config.MapPropertyTypeAsync<ListItems, DictionaryItems, List<string>, Dictionary<int, string>>(x => x.Items, GetItemsAsync);
+                config.MapPropertyTypeAsync(x => x.Items, GetItemsAsync);
             });
 
         //Assert

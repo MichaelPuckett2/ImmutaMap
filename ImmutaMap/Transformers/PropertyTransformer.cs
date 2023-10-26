@@ -1,15 +1,15 @@
 ﻿namespace ImmutaMap.Transformers;
 
 /// <inheritdoc />
-public class PropertyTransformer<TSourcePropertyType, TTargetPropertyType> : ITransformer
+public class PropertyTransformer<TSourcePropertyType> : ITransformer
 {
     private readonly (string Name, Type type) key;
-    private readonly Func<TSourcePropertyType, TTargetPropertyType> func;
+    private readonly Func<TSourcePropertyType, object> func;
 
-    public PropertyTransformer(string name, Func<TSourcePropertyType, TTargetPropertyType> propertyResultFunc)
+    public PropertyTransformer(string name, Func<TSourcePropertyType, object> propertyResultFunc)
     {
         key = (name, typeof(TSourcePropertyType));
-        func = new Func<TSourcePropertyType, TTargetPropertyType>(propertyResultFunc.Invoke);
+        func = new Func<TSourcePropertyType, object>(propertyResultFunc.Invoke);
     }
 
     /// <inheritdoc />

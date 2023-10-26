@@ -1,14 +1,14 @@
 ﻿namespace ImmutaMap.Transformers;
 
-public class AsyncPropertyTransformer<TSourcePropertyType, TTargetPropertyType> : IAsyncTransformer
+public class AsyncPropertyTransformer<TSourcePropertyType> : IAsyncTransformer
 {
     private readonly (string Name, Type type) key;
-    private readonly Func<TSourcePropertyType, ValueTask<TTargetPropertyType>> func;
+    private readonly Func<TSourcePropertyType, ValueTask<object>> func;
 
-    public AsyncPropertyTransformer(string name, Func<TSourcePropertyType, ValueTask<TTargetPropertyType>> propertyResultFunc)
+    public AsyncPropertyTransformer(string name, Func<TSourcePropertyType, ValueTask<object>> propertyResultFunc)
     {
         key = (name, typeof(TSourcePropertyType));
-        func = new Func<TSourcePropertyType, ValueTask<TTargetPropertyType>>(propertyResultFunc.Invoke);
+        func = new Func<TSourcePropertyType, ValueTask<object>>(propertyResultFunc.Invoke);
     }
 
     /// <inheritdoc />
