@@ -33,7 +33,7 @@ public static partial class TargetExtensions
     /// <param name="Map">Map that can be supplied to mapping.</param>
     /// <param name="throwExceptions">Options value that determines if exceptions will be thrown or handled silently.  Default is true to throw exceptoipns.</param>
     /// <returns>Instantiated T target value.</returns>
-    public static T? With<T>(this T t, dynamic a, Action<IConfiguration<T, T>> config)
+    public static T? With<T>(this T t, dynamic a, Action<Configuration<T, T>> config)
     {
         var configuration = new Configuration<T, T>();
         config.Invoke(configuration);
@@ -47,7 +47,7 @@ public static partial class TargetExtensions
         return TargetBuilder.GetNewInstance().Build(configuration, t);
     }
 
-    public static T? With<T>(this T source, Action<IConfiguration<T, T>> config)
+    public static T? With<T>(this T source, Action<Configuration<T, T>> config)
         where T : notnull
     {
         var configuration = new Configuration<T, T>();
