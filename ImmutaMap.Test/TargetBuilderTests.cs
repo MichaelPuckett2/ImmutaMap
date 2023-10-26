@@ -364,4 +364,151 @@ public class TargetBuilderTests
         //Assert
         CollectionAssert.AreEqual(expectedValue, actor?.Items);
     }
+
+    [TestMethod]
+    public void TestCopyExtension()
+    {
+        //Arrange
+        var master = new Master
+        {
+            Count = 50,
+            Item1 = "Mock1",
+            Item2 = "Mock2",
+            Item3 = "Mock3"
+        };
+
+        var slave = new Slave
+        {
+            Count = 100,
+            Item2 = "Slave2"
+        };
+
+        //Act
+        master.Copy(slave);
+
+        //Assert
+        Assert.AreEqual(slave.Count, master.Count);
+        Assert.AreEqual("Mock1", master.Item1);
+        Assert.AreEqual(slave.Item2, master.Item2);
+        Assert.AreEqual("Mock3", master.Item3);
+    }
+
+    [TestMethod]
+    public void TestCopyConfiguredExtension()
+    {
+        //Arrange
+        var master = new Master
+        {
+            Count = 50,
+            Item1 = "Mock1",
+            Item2 = "Mock2",
+            Item3 = "Mock3"
+        };
+
+        var slave = new SlaveOdd
+        {
+            Counter = 100,
+            Item_2 = "Slave2"
+        };
+
+        //Act
+        master.Copy(slave, config =>
+        {
+            config.MapName(x => x.Counter, x => x.Count)
+                  .MapName(x => x.Item_2, x => x.Item2);
+        });
+
+        //Assert
+        Assert.AreEqual(slave.Counter, master.Count);
+        Assert.AreEqual("Mock1", master.Item1);
+        Assert.AreEqual(slave.Item_2, master.Item2);
+        Assert.AreEqual("Mock3", master.Item3);
+    }
+
+    [TestMethod]
+    public async Task TestCopyAsyncExtension()
+    {
+        //Arrange
+        var master = new Master
+        {
+            Count = 50,
+            Item1 = "Mock1",
+            Item2 = "Mock2",
+            Item3 = "Mock3"
+        };
+
+        var slave = new Slave
+        {
+            Count = 100,
+            Item2 = "Slave2"
+        };
+
+        //Act
+        await master.CopyAsync(slave);
+
+        //Assert
+        Assert.AreEqual(slave.Count, master.Count);
+        Assert.AreEqual("Mock1", master.Item1);
+        Assert.AreEqual(slave.Item2, master.Item2);
+        Assert.AreEqual("Mock3", master.Item3);
+    }
+
+    [TestMethod]
+    public async Task TestCopyAsyncConfiguredExtension()
+    {
+        //Arrange
+        var master = new Master
+        {
+            Count = 50,
+            Item1 = "Mock1",
+            Item2 = "Mock2",
+            Item3 = "Mock3"
+        };
+
+        var slave = new SlaveOdd
+        {
+            Counter = 100,
+            Item_2 = "Slave2"
+        };
+
+        //Act
+        await master.CopyAsync(slave, config =>
+        {
+            config.MapName(x => x.Counter, x => x.Count)
+                  .MapName(x => x.Item_2, x => x.Item2);
+            config.MapTypeAsync<string>(async str =>
+            {
+                await Task.Delay(1);
+                str = str.ToUpper();
+                await Task.Delay(1);
+                return str;
+            });
+        });
+
+        //Assert
+        Assert.AreEqual(slave.Counter, master.Count);
+        Assert.AreEqual("Mock1", master.Item1);
+        Assert.AreEqual(slave.Item_2.ToUpper(), master.Item2);
+        Assert.AreEqual("Mock3", master.Item3);
+    }
+}
+
+public class Master
+{
+    public int Count { get; set; }
+    public string Item1 { get; set; } = string.Empty;
+    public string Item2 { get; set; } = string.Empty;
+    public string Item3 { get; set; } = string.Empty;
+}
+
+public class Slave
+{
+    public int Count { get; set; }
+    public string Item2 { get; set; } = string.Empty;
+}
+
+public class SlaveOdd
+{
+    public int Counter { get; set; }
+    public string Item_2 { get; set; } = string.Empty;
 }

@@ -41,7 +41,8 @@ public class AsyncTargetBuilder
         {
             return default;
         }
-        var target = await CopyAsync(configuration, source, Array.Empty<object>);
+        var target = typeFormatter.GetInstance<TTarget>();
+        target = await CopyAsync(configuration, source, target);
         return target;
     }
 
@@ -56,14 +57,18 @@ public class AsyncTargetBuilder
     /// <returns>An instance of the target type with values mapped from the source instance.</returns>
     public async Task<TTarget> BuildAsync<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> getArgs)
     {
-        var target = await CopyAsync(configuration, source, getArgs);
+        var target = typeFormatter.GetInstance<TTarget>(getArgs);
+        target = await CopyAsync(configuration, source, target);
         return target;
     }
 
-    private async Task<TTarget> CopyAsync<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, Func<object[]> getArgs)
+    public async Task ReverseCopyAsync<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target)
     {
-        var target = typeFormatter.GetInstance<TTarget>(getArgs);
+        await CopyAsync(configuration, source, target);
+    }
 
+    private async Task<TTarget> CopyAsync<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target)
+    {
         var skipProperties = configuration.Skips.Select(x => x.GetMemberName()).ToHashSet();
         var sourcePropertyInfos = source == null
             ? typeof(TSource).GetProperties(PropertyBindingFlag).Where(x => !skipProperties.Contains(x.Name)).ToList()

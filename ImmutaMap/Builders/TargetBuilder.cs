@@ -62,6 +62,11 @@ public class TargetBuilder
         return target;
     }
 
+    public void ReverseCopy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target)
+    {
+        Copy(configuration, source, target);
+    }
+
     private void Copy<TSource, TTarget>(IConfiguration<TSource, TTarget> configuration, TSource source, TTarget target)
     {
         var skipProperties = configuration.Skips.Select(x => x.GetMemberName()).ToHashSet();

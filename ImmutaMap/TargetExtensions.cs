@@ -125,6 +125,18 @@ public static partial class TargetExtensions
         config.Invoke(configuration);
         return AnonymousMapBuilder.Build(configuration, t);
     }
+
+    public static void Copy<TSource, TTarget>(this TTarget target, TSource source)
+    {
+        TargetBuilder.GetNewInstance().ReverseCopy(Configuration<object, TTarget>.Empty, source!, target);
+    }
+
+    public static void Copy<TSource, TTarget>(this TTarget target, TSource source, Action<Configuration<TSource, TTarget>> config)
+    {
+        var configuration = new Configuration<TSource, TTarget>();
+        config.Invoke(configuration);
+        TargetBuilder.GetNewInstance().ReverseCopy(configuration, source!, target);
+    }
 }
 
 public static partial class TargetExtensions
@@ -139,5 +151,17 @@ public static partial class TargetExtensions
         var configuration = new AsyncConfiguration<TSource, TTarget>();
         config.Invoke(configuration);
         return AsyncTargetBuilder.GetNewInstance().BuildAsync(configuration, source);
+    }
+
+    public static Task CopyAsync<TSource, TTarget>(this TTarget target, TSource source)
+    {
+        return AsyncTargetBuilder.GetNewInstance().ReverseCopyAsync(AsyncConfiguration<object, TTarget>.Empty, source!, target);
+    }
+
+    public static Task CopyAsync<TSource, TTarget>(this TTarget target, TSource source, Action<AsyncConfiguration<TSource, TTarget>> config)
+    {
+        var configuration = new AsyncConfiguration<TSource, TTarget>();
+        config.Invoke(configuration);
+        return AsyncTargetBuilder.GetNewInstance().ReverseCopyAsync(configuration, source!, target);
     }
 }
